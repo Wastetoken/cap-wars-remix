@@ -18,6 +18,7 @@ import type { AbilityId } from './abilities'
 import type { CharacterId } from './characters'
 import { CHARACTERS, DEFAULT_CHARACTER } from './characters'
 import { levelForSouls } from './progression'
+import { supabase } from '../supabaseClient'
 
 // Re-export character skill helpers for convenience
 export { getCharacterSkillNodes, getCharacterBranches }
@@ -191,26 +192,65 @@ export const persistSave = (
   selectedCharacter: CharacterId,
   characterSkills: Record<CharacterId, Skills>,
   characterSouls: Record<CharacterId, number>,
-  characterTalentPoints: Record<CharacterId, number>
+  characterTalentPoints: Record<CharacterId, number>,
+  userId?: string
 ) => {
+  const payload = {
+    version: SAVE_VERSION,
+    // Legacy mirrors of the active character (used only by old migrations)
+    souls: characterSouls[selectedCharacter] ?? 0,
+    skills: characterSkills[selectedCharacter] ?? {},
+    talentPoints: characterTalentPoints[selectedCharacter] ?? 0,
+    selectedCharacter,
+    characterSkills,
+    characterSouls,
+    characterTalentPoints,
+  }
+
   try {
-    localStorage.setItem(
-      SAVE_KEY,
-      JSON.stringify({
-        version: SAVE_VERSION,
-        // Legacy mirrors of the active character (used only by old migrations)
-        souls: characterSouls[selectedCharacter] ?? 0,
-        skills: characterSkills[selectedCharacter] ?? {},
-        talentPoints: characterTalentPoints[selectedCharacter] ?? 0,
-        selectedCharacter,
-        characterSkills,
-        characterSouls,
-        characterTalentPoints,
-      })
-    )
+    localStorage.setItem(SAVE_KEY, JSON.stringify(payload))
   } catch {
     // storage unavailable — play session-only
   }
+
+  if (userId) {
+    // Fire and forget cloud save
+    supabase.from('saves').upsert({
+      user_id: userId,
+      save_data: payload,
+      updated_at: new Date().toISOString(),
+    }).then(({ error }) => {
+      if (error) console.error('Cloud save failed:', error)
+    })
+  }
+}
+
+export const fetchCloudSave = async (userId: string): Promise<SaveData | null> => {
+  const { data, error } = await supabase
+    .from('saves')
+    .select('save_data')
+    .eq('user_id', userId)
+    .single()
+  
+  if (error || !data) return null
+  
+  const parsed = data.save_data
+  if (parsed.version === SAVE_VERSION) {
+    const characterSkills: Record<CharacterId, Skills> = parsed.characterSkills ?? {}
+    const sc = parsed.selectedCharacter && parsed.selectedCharacter in CHARACTERS
+      ? parsed.selectedCharacter
+      : DEFAULT_CHARACTER
+    return {
+      souls: parsed.characterSouls[sc] ?? 0,
+      skills: characterSkills[sc] ?? parsed.skills ?? {},
+      talentPoints: parsed.characterTalentPoints[sc] ?? 0,
+      selectedCharacter: sc,
+      characterSkills: parsed.characterSkills,
+      characterSouls: parsed.characterSouls,
+      characterTalentPoints: parsed.characterTalentPoints,
+    }
+  }
+  return null
 }
 
 // ---------------------------------------------------------------------------

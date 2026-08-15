@@ -4,7 +4,84 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>r3f-webgpu</title>
+    <title>Cap Wars Remix</title>
+
+    <!-- Fonts: Cinzel for the carved-stone display headings, Inter for legible UI/body text -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Theme: dungeon stone + torch ember + spellcast green -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'void': '#0b0906',
+                        'stone': '#181209',
+                        'stone-panel': '#211a10',
+                        'stone-input': '#2b2114',
+                        'stone-border': '#3c2f1c',
+                        'ember': '#e6923f',
+                        'spell': '#8cff5c',
+                        'spell-dim': '#4f8a2e',
+                        'parchment': '#ece3d2',
+                        'ash': '#948a76',
+                    },
+                    fontFamily: {
+                        'display': ['Cinzel', 'serif'],
+                        'body': ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        @keyframes torch-flicker {
+            0%, 100% { opacity: 0.85; }
+            25% { opacity: 1; }
+            40% { opacity: 0.75; }
+            60% { opacity: 0.95; }
+            80% { opacity: 0.8; }
+        }
+        @keyframes spell-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(140, 255, 92, 0.0); }
+            50% { box-shadow: 0 0 0 4px rgba(140, 255, 92, 0.12); }
+        }
+        .ember-glow {
+            animation: torch-flicker 4.5s ease-in-out infinite;
+        }
+        .ember-glow-delay {
+            animation: torch-flicker 4.5s ease-in-out infinite;
+            animation-delay: 1.8s;
+        }
+        .spell-focus:focus {
+            border-color: #8cff5c !important;
+            box-shadow: 0 0 0 3px rgba(140, 255, 92, 0.18), 0 0 18px -4px rgba(140, 255, 92, 0.35);
+        }
+        .cast-btn {
+            position: relative;
+            overflow: hidden;
+        }
+        .cast-btn::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.35), transparent 60%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        .cast-btn:hover::after {
+            opacity: 1;
+        }
+        .guest-link {
+            transition: color 0.2s ease, border-color 0.2s ease;
+        }
+    </style>
   </head>
   <body>
     <div id="root"></div>

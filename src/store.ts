@@ -146,12 +146,18 @@ interface GameState {
     // Level loading state (masks spawn lag)
     isLevelLoading: boolean
     setLevelLoading: (loading: boolean) => void
-    gamePhase: 'menu' | 'playing' | 'paused'
-    setGamePhase: (phase: 'menu' | 'playing' | 'paused') => void
+
+    // Auth
+    authUser: any | null
+    setAuthUser: (user: any | null) => void
+
+    gamePhase: 'login' | 'menu' | 'playing' | 'paused'
+    setGamePhase: (phase: 'login' | 'menu' | 'playing' | 'paused') => void
     startGame: () => void
     quitToMenu: () => void
 
     // Settings (persisted separately from progression)
+    loadCloudSave: (saveData: any) => void
     settings: GameSettings
     updateSettings: (patch: Partial<GameSettings>) => void
 
@@ -359,11 +365,11 @@ export const useGameStore = create<GameState>((set, get) => {
                 })
                 eventBus.emit(EVENTS.LEVEL_UP, newLevel)
                 eventBus.emit(EVENTS.ANNOUNCE, `Level ${newLevel}`, `+${levelsGained} talent point${levelsGained > 1 ? 's' : ''} — press TAB`)
-                persistSave(s.selectedCharacter, s.characterSkills, characterSouls, characterTalentPoints)
+                persistSave(s.selectedCharacter, s.characterSkills, characterSouls, characterTalentPoints, s.authUser?.id)
                 return
             }
             set({ souls: next, characterSouls })
-            persistSave(s.selectedCharacter, s.characterSkills, characterSouls, s.characterTalentPoints)
+            persistSave(s.selectedCharacter, s.characterSkills, characterSouls, s.characterTalentPoints, s.authUser?.id)
         },
 
         // Character selection
@@ -385,7 +391,7 @@ export const useGameStore = create<GameState>((set, get) => {
                 playerMaxHealth: newMaxHealth,
                 playerHealth: newMaxHealth,
             })
-            persistSave(character, s.characterSkills, s.characterSouls, s.characterTalentPoints)
+            persistSave(character, s.characterSkills, s.characterSouls, s.characterTalentPoints, s.authUser?.id)
         },
 
         // Talents (1 point per rank, parent prerequisite)
@@ -411,7 +417,7 @@ export const useGameStore = create<GameState>((set, get) => {
                 playerHealth: healthGain > 0 ? s.playerHealth + healthGain : s.playerHealth,
                 characterSkills,
             })
-            persistSave(s.selectedCharacter, characterSkills, s.characterSouls, characterTalentPoints)
+            persistSave(s.selectedCharacter, characterSkills, s.characterSouls, characterTalentPoints, s.authUser?.id)
             eventBus.emit(EVENTS.TALENT_BUY, true)
             return true
         },
@@ -502,20 +508,22 @@ export const useGameStore = create<GameState>((set, get) => {
         isLevelLoading: false,
         setLevelLoading: (loading) => set({ isLevelLoading: loading }),
 
-        // Game flow
-        gamePhase: 'menu',
-        setGamePhase: (phase) => set({ gamePhase: phase }),
-        startGame: () => {
-            get().resetRun()
-            set({ gamePhase: 'playing', skillTreeOpen: false, settingsOpen: false, loadoutOpen: false, replayPhase: 'idle' })
-        },
-        quitToMenu: () => {
-            get().resetRun()
-            set({ gamePhase: 'menu', skillTreeOpen: false, settingsOpen: false, loadoutOpen: false, replayPhase: 'idle' })
-        },
+        // Auth
+        authUser: null,
+        setAuthUser: (user) => set({ authUser: user }),
 
-        // Settings
-        settings,
+        // Persistence & settings
+        loadCloudSave: (saveData) => {
+            set({
+                souls: saveData.souls,
+                characterSkills: saveData.characterSkills,
+                characterSouls: saveData.characterSouls,
+                characterTalentPoints: saveData.characterTalentPoints,
+                selectedCharacter: saveData.selectedCharacter
+            })
+            const s = get()
+            persistSave(s.selectedCharacter, s.characterSkills, s.characterSouls, s.characterTalentPoints, s.authUser?.id)
+        },
         updateSettings: (patch) => {
             const next = { ...get().settings, ...patch }
             set({ settings: next })

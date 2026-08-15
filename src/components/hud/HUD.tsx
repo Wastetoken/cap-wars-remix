@@ -30,6 +30,7 @@ import { MenuScene } from '@/components/menu/MenuScene'
 import { LoadingArt } from './BootLoader'
 import { playSting } from '@/game/audio'
 import { useProgress } from '@react-three/drei'
+import { LoginScreen } from '../menu/LoginScreen'
 
 // ============================================================================
 // HUD — DOM overlay: main menu, pause, settings, talent tree, vitals,
@@ -55,6 +56,7 @@ export const HUD = () => {
       <Announcements />
       <DamageFlash />
 
+      {gamePhase === 'login' && !overlayOpen && <LoginScreen />}
       {gamePhase === 'menu' && !overlayOpen && <MainMenu />}
       {gamePhase === 'paused' && !overlayOpen && !playerDead && !gameWon && <PauseMenu />}
       {settingsOpen && <SettingsMenu />}
