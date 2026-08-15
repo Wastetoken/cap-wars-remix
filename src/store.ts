@@ -523,6 +523,8 @@ export const useGameStore = create<GameState>((set, get) => {
         // Auth
         authUser: null,
         setAuthUser: (user) => set({ authUser: user }),
+        gamePhase: 'login',
+        setGamePhase: (phase) => set({ gamePhase: phase }),
 
         // Persistence & settings
         settings,
