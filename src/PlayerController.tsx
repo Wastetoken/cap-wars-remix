@@ -611,6 +611,11 @@ export const PlayerController = () => {
       capsRef.current?.onMouseDown()
     }
     const onTouchAttackEnd = () => capsRef.current?.onMouseUp()
+    const onTouchBlockStart = () => {
+      if (isGameFrozen(useGameStore.getState())) return
+      capsRef.current?.onRightClick()
+    }
+    const onTouchBlockEnd = () => capsRef.current?.onRightRelease()
 
     window.addEventListener('keydown', handleKeyDown)
     window.addEventListener('mousedown', handleMouseDown)
@@ -620,6 +625,8 @@ export const PlayerController = () => {
     eventBus.on(EVENTS.TOUCH_DASH, onTouchDash)
     eventBus.on(EVENTS.TOUCH_ATTACK_START, onTouchAttackStart)
     eventBus.on(EVENTS.TOUCH_ATTACK_END, onTouchAttackEnd)
+    eventBus.on(EVENTS.TOUCH_BLOCK_START, onTouchBlockStart)
+    eventBus.on(EVENTS.TOUCH_BLOCK_END, onTouchBlockEnd)
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
@@ -630,6 +637,8 @@ export const PlayerController = () => {
       eventBus.off(EVENTS.TOUCH_DASH, onTouchDash)
       eventBus.off(EVENTS.TOUCH_ATTACK_START, onTouchAttackStart)
       eventBus.off(EVENTS.TOUCH_ATTACK_END, onTouchAttackEnd)
+      eventBus.off(EVENTS.TOUCH_BLOCK_START, onTouchBlockStart)
+      eventBus.off(EVENTS.TOUCH_BLOCK_END, onTouchBlockEnd)
       resetTouchMove()
       registerPlayerObject(null)
     }

@@ -29,7 +29,6 @@ import { LoadoutScreen } from './LoadoutScreen'
 import { MenuScene } from '@/components/menu/MenuScene'
 import { LoadingArt } from './BootLoader'
 import { playSting } from '@/game/audio'
-import { importRecording } from '@/replay/session'
 import { useProgress } from '@react-three/drei'
 
 // ============================================================================
@@ -253,24 +252,9 @@ const MainMenu = () => {
   // half-rendered scene or placeholder junk on screen at startup
   const { progress } = useProgress()
   const sceneReady = progress >= 100
-  const replayFileRef = useRef<HTMLInputElement>(null)
 
   const heroLevel = levelForSouls(souls)
   const maxHp = CHARACTERS[selectedCharacter].baseHealth + maxHealthBonus(skills)
-
-  const onReplayFile = async (file: File | undefined) => {
-    if (!file) return
-    try {
-      await importRecording(file)
-    } catch (err) {
-      console.error('[replay] import failed:', err)
-      eventBus.emit(
-        EVENTS.ANNOUNCE,
-        'Replay',
-        err instanceof Error ? err.message : 'Could not load that file'
-      )
-    }
-  }
 
   const onExitGame = () => {
     // Browsers only let scripts close windows they opened — tell the player
@@ -309,15 +293,6 @@ const MainMenu = () => {
                 <path d="M8 21v-4M16 21v-4" />
               </svg>
               <span>Talents</span>
-            </button>
-            <button className="menu-rpg-btn" onClick={() => replayFileRef.current?.click()}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                <path d="M4 4l7 7M4 4v4M4 4h4" />
-                <path d="M20 4l-7 7M20 4v4M20 4h-4" />
-                <path d="M6.5 9.5L4 20l2-2 2 2 2.5-8.5" />
-                <path d="M17.5 9.5L20 20l-2-2-2 2-2.5-8.5" />
-              </svg>
-              <span>Load Replay</span>
             </button>
             <button className="menu-rpg-btn" onClick={() => setSettingsOpen(true)}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
@@ -374,16 +349,6 @@ const MainMenu = () => {
           </div>
         </div>
 
-        <input
-          ref={replayFileRef}
-          type="file"
-          accept=".json,application/json"
-          style={{ display: 'none' }}
-          onChange={(e) => {
-            void onReplayFile(e.target.files?.[0])
-            e.target.value = ''
-          }}
-        />
       </div>
       )}
     </div>

@@ -51,6 +51,8 @@ export const EVENTS = {
   TOUCH_DASH: 'touchDash',
   TOUCH_ATTACK_START: 'touchAttackStart',
   TOUCH_ATTACK_END: 'touchAttackEnd',
+  TOUCH_BLOCK_START: 'touchBlockStart',
+  TOUCH_BLOCK_END: 'touchBlockEnd',
 }
 
 // Exposed for debugging / e2e probes

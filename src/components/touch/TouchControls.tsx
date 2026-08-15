@@ -31,6 +31,7 @@ export const TouchControls = () => {
       <div className="touch-cluster">
         <TouchAbilityButtons />
         <DashButton />
+        <BlockButton />
         <AttackButton />
       </div>
       <PauseButton />
@@ -139,6 +140,27 @@ const AttackButton = () => (
     <span className="touch-btn-disc">
       <img className="touch-btn-icon" src="/ui/icons/attack.png" alt="Attack" draggable={false} />
     </span>
+  </div>
+)
+
+const BlockButton = () => (
+  <div
+    className="touch-btn touch-block framed"
+    onPointerDown={(e) => {
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId)
+      } catch {
+        /* best-effort */
+      }
+      eventBus.emit(EVENTS.TOUCH_BLOCK_START)
+    }}
+    onPointerUp={() => eventBus.emit(EVENTS.TOUCH_BLOCK_END)}
+    onPointerCancel={() => eventBus.emit(EVENTS.TOUCH_BLOCK_END)}
+  >
+    <span className="touch-btn-disc">
+      <img className="touch-btn-icon" src="/ui/icons/block.png" alt="Block" draggable={false} />
+    </span>
+    <span className="touch-btn-sub">Block</span>
   </div>
 )
 

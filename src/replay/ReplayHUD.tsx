@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useGameStore, isGameFrozen } from '@/store'
 import { eventBus, EVENTS } from '@/constants'
-import { seek, exitPlayback, exportRecording, startRecording, stopRecordingToPlayback } from './session'
+import { seek, exitPlayback, exportRecording } from './session'
 
 // ============================================================================
 // Replay overlay — REC indicator while recording, transport bar during
@@ -34,28 +34,11 @@ export const ReplayHUD = () => {
   // Global replay keys — registered here, OUTSIDE the Canvas, so a WebGL
   // context loss (which remounts the whole scene tree) can never detach them.
   // Capture phase so Esc-in-playback beats the pause handler.
-  // Primary toggle is Backquote (`) — F-keys are hardware-hijacked on many
-  // laptops (F8 = airplane mode etc). F8 still works on desktops.
+  // F8 / Backquote recording toggle is intentionally disabled — recording
+  // is a developer/trailer tool and should not be accessible via keyboard.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const store = useGameStore.getState()
-      if (e.code === 'Backquote' || e.code === 'F8') {
-        e.preventDefault()
-        if (store.replayPhase === 'idle' && store.gamePhase === 'playing' && !isGameFrozen(store)) {
-          startRecording()
-        } else if (store.replayPhase === 'recording') {
-          stopRecordingToPlayback()
-        } else if (store.replayPhase === 'playback') {
-          exitPlayback()
-        } else if (store.replayPhase === 'idle') {
-          // Never fail silently — tell the player why the key did nothing.
-          const reason = store.gamePhase !== 'playing'
-            ? 'Start a run first'
-            : 'Unavailable while paused'
-          eventBus.emit(EVENTS.ANNOUNCE, 'Replay', reason)
-        }
-        return
-      }
       if (e.code === 'Escape' && store.replayPhase === 'playback') {
         e.preventDefault()
         e.stopPropagation()
