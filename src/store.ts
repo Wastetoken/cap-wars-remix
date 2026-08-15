@@ -513,6 +513,7 @@ export const useGameStore = create<GameState>((set, get) => {
         setAuthUser: (user) => set({ authUser: user }),
 
         // Persistence & settings
+        settings,
         loadCloudSave: (saveData) => {
             set({
                 souls: saveData.souls,
