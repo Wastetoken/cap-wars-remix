@@ -3,6 +3,7 @@ import { create } from "zustand";
 import {
     loadSave,
     persistSave,
+    awardSoulsRPC,
     prereqMet,
     maxHealthBonus,
     loadSettings,
@@ -349,6 +350,15 @@ export const useGameStore = create<GameState>((set, get) => {
             const next = s.souls + amount
             const characterSouls = { ...s.characterSouls, [s.selectedCharacter]: next }
             const newLevel = levelForSouls(next)
+            const persistUserId = s.authUser?.id
+            const callAwardRpc = async () => {
+              if (!persistUserId) return
+              try {
+                await awardSoulsRPC(persistUserId, s.selectedCharacter, amount)
+              } catch (error) {
+                console.error('award_souls failed:', error)
+              }
+            }
             if (newLevel > s.playerLevel) {
                 const levelsGained = newLevel - s.playerLevel
                 const talentPoints = s.talentPoints + levelsGained
@@ -365,11 +375,13 @@ export const useGameStore = create<GameState>((set, get) => {
                 })
                 eventBus.emit(EVENTS.LEVEL_UP, newLevel)
                 eventBus.emit(EVENTS.ANNOUNCE, `Level ${newLevel}`, `+${levelsGained} talent point${levelsGained > 1 ? 's' : ''} — press TAB`)
-                persistSave(s.selectedCharacter, s.characterSkills, characterSouls, characterTalentPoints, s.authUser?.id)
+                persistSave(s.selectedCharacter, s.characterSkills, characterSouls, characterTalentPoints, persistUserId)
+                void callAwardRpc()
                 return
             }
             set({ souls: next, characterSouls })
-            persistSave(s.selectedCharacter, s.characterSkills, characterSouls, s.characterTalentPoints, s.authUser?.id)
+            persistSave(s.selectedCharacter, s.characterSkills, characterSouls, s.characterTalentPoints, persistUserId)
+            void callAwardRpc()
         },
 
         // Character selection

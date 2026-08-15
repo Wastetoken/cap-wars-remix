@@ -225,6 +225,19 @@ export const persistSave = (
   }
 }
 
+export async function awardSoulsRPC(
+  userId: string,
+  characterKey: string,
+  souls: number,
+) {
+  const { error } = await supabase.rpc('award_souls', {
+    p_user_id: userId,
+    p_character_key: characterKey,
+    p_souls: souls,
+  })
+  if (error) throw error
+}
+
 export const fetchCloudSave = async (userId: string): Promise<SaveData | null> => {
   const { data, error } = await supabase
     .from('saves')
