@@ -47,7 +47,7 @@ const RARITY_NAMES: Record<GearRarity, string> = {
 
 const SLOT_DEFS: Record<
   GearSlot,
-  { names: string[]; roll: (m: number) => Pick<GearPiece, 'damagePct' | 'hpFlat' | 'speedPct' | 'dashCdPct' | 'critPct' | 'statLine'> }
+  { names: string[]; characterNames?: Record<string, string[]>; roll: (m: number) => Pick<GearPiece, 'damagePct' | 'hpFlat' | 'speedPct' | 'dashCdPct' | 'critPct' | 'statLine'> }
 > = {
   weapon: {
     names: ['Warblade', 'Hexbrand', 'Kingslayer', 'Oathkeeper'],
@@ -57,7 +57,22 @@ const SLOT_DEFS: Record<
     },
   },
   armor: {
-    names: ['Bulwark Plate', 'Gravemail', 'Aegis of Dawn', 'Stoneheart'],
+    names: [
+      'Bulwark Plate',
+      'Gravemail',
+      'Aegis of Dawn',
+      'Stoneheart',
+      'Barkhide Raiment',
+      'Ornamental Oath',
+      'Lavaweave Vestments',
+      'Pinebound Leathers',
+    ],
+    characterNames: {
+      knight: ['Ornamental Oath', 'Aegis of Dawn', 'Bulwark Plate', 'Stoneheart'],
+      barbarian: ['Barkhide Raiment', 'Stoneheart', 'Gravemail', 'Bulwark Plate'],
+      mage: ['Lavaweave Vestments', 'Aegis of Dawn', 'Gravemail', 'Stoneheart'],
+      rogue: ['Pinebound Leathers', 'Stoneheart', 'Gravemail', 'Bulwark Plate'],
+    },
     roll: (m) => {
       const hpFlat = Math.round((25 + Math.random() * 15) * m)
       return { damagePct: 0, hpFlat, speedPct: 0, dashCdPct: 0, critPct: 0, statLine: `+${hpFlat} max health` }
@@ -97,7 +112,7 @@ const rollRarity = (luck: number): GearRarity => {
  * as the tier proxy. Returns null when nothing drops.
  *   trash (souls < 4): 7%    elite (4–9): 16%    boss (60): 100% + luck
  */
-export const rollGearDrop = (id: number, souls: number): GearPiece | null => {
+export const rollGearDrop = (id: number, souls: number, characterId?: string): GearPiece | null => {
   const isBoss = souls >= 60
   const isElite = souls >= 4
   const chance = isBoss ? 1 : isElite ? 0.16 : 0.07
@@ -107,7 +122,8 @@ export const rollGearDrop = (id: number, souls: number): GearPiece | null => {
   const slot = SLOTS[Math.floor(Math.random() * SLOTS.length)]
   const def = SLOT_DEFS[slot]
   const rolled = def.roll(RARITY_MULT[rarity])
-  const name = `${RARITY_NAMES[rarity]} ${def.names[Math.floor(Math.random() * def.names.length)]}`
+  const namePool = characterId && def.characterNames?.[characterId] ? def.characterNames[characterId] : def.names
+  const name = `${RARITY_NAMES[rarity]} ${namePool[Math.floor(Math.random() * namePool.length)]}`
 
   return { id, slot, rarity, name, ...rolled }
 }
@@ -161,6 +177,8 @@ export type GearVisual = {
   wardColor: string | null
   /** Orbiting trinket charm color */
   trinketColor: string | null
+  /** Full armor override meshes (helmet/chest/arms/legs/cape) */
+  fullArmor: string | null
 }
 
 const rarityRank = (r: GearRarity) => RARITY_RANK[r]
@@ -219,7 +237,7 @@ const ARMOR_ATTACHMENTS: Record<string, Partial<Record<GearRarity, { show: strin
   // mage: no shield attachment — armor shows as a ward ring instead
 }
 
-const KNIGHT_SHIELDS = ['Round_Shield', 'Rectangle_Shield', 'Spike_Shield', 'Badge_Shield']
+const KNIGHT_SHIELDS = ['Round_Shield', 'Rectangle_Shield', 'Spike_Shield', 'Badge_Shield', 'Square_Shield_CV', 'Square_Shield_CS']
 
 /** Every attachment gear can touch — used to reset worn state before re-applying */
 export const GEAR_ATTACHMENT_NAMES = [
@@ -231,6 +249,8 @@ export const GEAR_ATTACHMENT_NAMES = [
   'Spellbook_open',
   ...KNIGHT_SHIELDS,
   'Barbarian_Round_Shield',
+  'Spike_Shield_CV',
+  'Spike_Shield_CS',
   'Throwable',
 ]
 

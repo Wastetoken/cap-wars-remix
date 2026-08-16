@@ -71,7 +71,8 @@ export const GearDrops = () => {
       baseSouls?: number
     ) => {
       if (!position) return
-      const piece = rollGearDrop(nextDropId, baseSouls ?? _souls)
+      const characterId = useGameStore.getState().selectedCharacter
+      const piece = rollGearDrop(nextDropId, baseSouls ?? _souls, characterId)
       if (!piece) return
       nextDropId++
       setDrops((prev) => [
