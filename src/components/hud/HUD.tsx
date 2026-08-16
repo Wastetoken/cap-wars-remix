@@ -489,6 +489,14 @@ const SettingsMenu = () => {
               { value: 'reduced', label: 'Reduced' },
             ]}
           />
+          <Segmented
+            label="Post-processing"
+            settingKey="postProcessing"
+            options={[
+              { value: true, label: 'On' },
+              { value: false, label: 'Off' },
+            ]}
+          />
         </div>
 
         <div className="menu-buttons">

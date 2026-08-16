@@ -5,7 +5,7 @@ import * as THREE from 'three/webgpu'
 import gsap from 'gsap'
 import type { Entity } from 'koota'
 import { useGLTF } from '@react-three/drei'
-import { cloneRigged } from '@/game/cloneRigged'
+import { acquireClone, releaseClone, prewarmPool } from './meshPool'
 
 import {
   IsEnemy,
@@ -96,7 +96,7 @@ export function EnemyMesh({ entity, models }: EnemyMeshProps) {
   const isBoss = isBossMob(mob)
 
   const model = models[def.model]
-  const clone = useMemo(() => cloneRigged(model.scene), [model.scene])
+  const clone = useMemo(() => acquireClone(mob, model.scene), [mob, model.scene])
   // MANUAL ANIMATION SETUP — same pattern as Caps.tsx. drei v11 alpha's
   // useAnimations binds clips in a layout effect that doesn't re-run when the
   // ref attaches, so actions can silently never be created (T-pose / broken
@@ -113,6 +113,13 @@ export function EnemyMesh({ entity, models }: EnemyMeshProps) {
     registerRig(enemyRigId(entity.id()), { mixer, actions })
     return () => unregisterRig(enemyRigId(entity.id()))
   }, [entity, mixer, actions])
+
+  // Return clone to pool on unmount so it can be reused
+  useEffect(() => {
+    return () => {
+      releaseClone(mob, clone)
+    }
+  }, [mob, clone])
 
   // Collision store
   const registerCollider = useCollisionStore((s) => s.registerCollider)
@@ -660,6 +667,28 @@ export function EnemyManager() {
     }),
     [mage, rogue, barbarian, knight]
   )
+
+  useEffect(() => {
+    const entries = [
+      ['mage', mage.scene],
+      ['rogue', rogue.scene],
+      ['barbarian', barbarian.scene],
+      ['knight', knight.scene],
+    ] as const
+
+    let cancelled = false
+    const prewarmNext = (index: number) => {
+      if (cancelled || index >= entries.length) return
+      const [mobType, scene] = entries[index]
+      prewarmPool(mobType, scene, 2)
+      setTimeout(() => prewarmNext(index + 1), 0)
+    }
+    prewarmNext(0)
+
+    return () => {
+      cancelled = true
+    }
+  }, [mage, rogue, barbarian, knight])
 
   // Run enemy systems every frame
   useFrame((_, delta) => {

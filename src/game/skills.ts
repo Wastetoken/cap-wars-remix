@@ -274,6 +274,7 @@ export type GameSettings = {
   cameraShake: boolean
   shadows: 'high' | 'low' | 'off'
   particles: 'full' | 'reduced'
+  postProcessing: boolean
   musicVolume: number
   sfxVolume: number
 }
@@ -282,20 +283,35 @@ export const DEFAULT_SETTINGS: GameSettings = {
   cameraShake: true,
   shadows: 'high',
   particles: 'full',
+  postProcessing: true,
   musicVolume: 0.55,
   sfxVolume: 0.85,
 }
 
 const SETTINGS_KEY = 'caps-wars-settings'
 
+const isMobileDevice = () =>
+  typeof window !== 'undefined' &&
+  (window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(max-width: 1024px)').matches)
+
 export const loadSettings = (): GameSettings => {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY)
-    if (raw) return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) }
+    if (raw) {
+      const saved = JSON.parse(raw) as Partial<GameSettings>
+      const merged = { ...DEFAULT_SETTINGS, ...saved }
+      if (saved.postProcessing !== undefined) return merged
+      return { ...merged, postProcessing: !isMobileDevice() }
+    }
   } catch {
     // fall through to defaults
   }
-  return { ...DEFAULT_SETTINGS }
+  return {
+    ...DEFAULT_SETTINGS,
+    shadows: isMobileDevice() ? 'off' : 'high',
+    particles: isMobileDevice() ? 'reduced' : 'full',
+    postProcessing: !isMobileDevice(),
+  }
 }
 
 export const persistSettings = (settings: GameSettings) => {
