@@ -40,7 +40,11 @@ canvas {
   z-index: 10;
 }
 
-.hud button {
+.hud button,
+.hud input,
+.hud select,
+.hud textarea,
+.hud a {
   pointer-events: auto;
 }
 
