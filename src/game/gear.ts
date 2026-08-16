@@ -269,6 +269,10 @@ export const computeGearVisual = (
       // No attachment for this class — armor becomes a ward ring
       wardColor = RARITY_COLORS[armor.rarity]
     }
+  } else if (characterId === 'knight') {
+    show.push('Round_Shield')
+  } else if (characterId === 'barbarian') {
+    show.push('Barbarian_Round_Shield')
   }
 
   const boots = bestInSlot(gear, 'boots')
