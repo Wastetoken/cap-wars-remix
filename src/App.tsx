@@ -173,64 +173,67 @@ function App() {
     { name: 'right', keys: ['KeyD', 'ArrowRight'] },
     { name: 'dash', keys: ['ShiftLeft'] },
   ]
+  const gamePhase = useGameStore((s) => s.gamePhase)
+  const showGameCanvas = gamePhase === 'playing' || gamePhase === 'paused'
   // Replay playback is a spectator/cinematic mode — hide the gameplay HUD
   const replayPlayback = useGameStore((s) => s.replayPhase === 'playback')
   return (
     <>
-      <CanvasErrorBoundary>
-        {(canvasKey) => (
-          <Canvas
-            key={canvasKey}
-            shadows
-            // shadows="soft"
-            renderer={{
-              antialias: false,
-              depth: false,
-              stencil: false,
-              alpha: false,
-              forceWebGL: false,
-              outputType: HalfFloatType,
-            }}
-          >
-        <SceneErrorBoundary>
-          {/* Input + lights stay outside the model-loading Suspense so a slow
-              or failed GLB can never freeze player movement. */}
-          <Lights />
-          <KeyboardControls map={keyboardMap}>
-            <PlayerController />
-          </KeyboardControls>
-          <Suspense fallback={null}>
-            <Arena />
-            <PostProcessing />
-            <Particles />
-            {/*<OrbitControls /> */}
-            <Bullets />
-            <ParryBlockFX />
-            <PlayerProjectiles />
-            <Pickups />
-            <Portal />
-            <Shockwaves />
-            <DaggerRain />
-            <IceFloors />
-            <BuffAura />
-            <MageShield />
-            <BossAttacks />
-            <MobilityFX />
-            <GearDrops />
-            <LevelProps />
-            <CombatText />
-
-            <EnemySystem />
-            <ReplayGhosts />
-            <Preload all />
-          </Suspense>
-          <SceneProbe />
-          <ReplaySystem />
-          <ReplayCamera />
-        </SceneErrorBoundary>
-          </Canvas>
-        )}
-      </CanvasErrorBoundary>
+      {showGameCanvas && (
+        <CanvasErrorBoundary>
+          {(canvasKey) => (
+            <Canvas
+              key={canvasKey}
+              shadows
+              renderer={{
+                antialias: false,
+                depth: false,
+                stencil: false,
+                alpha: false,
+                forceWebGL: false,
+                outputType: HalfFloatType,
+              }}
+            >
+              <SceneErrorBoundary>
+                {/* Input + lights stay outside the model-loading Suspense so a slow
+                    or failed GLB can never freeze player movement. */}
+                <Lights />
+                <KeyboardControls map={keyboardMap}>
+                  <PlayerController />
+                </KeyboardControls>
+                <Suspense fallback={null}>
+                  <Arena />
+                  <PostProcessing />
+                  <Particles />
+                  {/*<OrbitControls /> */}
+                  <Bullets />
+                  <ParryBlockFX />
+                  <PlayerProjectiles />
+                  <Pickups />
+                  <Portal />
+                  <Shockwaves />
+                  <DaggerRain />
+                  <IceFloors />
+                  <BuffAura />
+                  <MageShield />
+                  <BossAttacks />
+                  <MobilityFX />
+                  <GearDrops />
+                  <LevelProps />
+                  <CombatText />
+  
+                  <EnemySystem />
+                  <ReplayGhosts />
+                  <Preload all />
+                </Suspense>
+                <SceneProbe />
+                <ReplaySystem />
+                <ReplayCamera />
+              </SceneErrorBoundary>
+            </Canvas>
+          )}
+        </CanvasErrorBoundary>
+      )}
       {!replayPlayback && <HUD />}
       {!replayPlayback && <TouchControls />}
       <AudioSystem />
