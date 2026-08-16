@@ -2,7 +2,6 @@ import * as THREE from 'three'
 import { useRef, useEffect, useImperativeHandle, forwardRef, useMemo, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
-import { GLTFLoader } from 'three-stdlib'
 import { cloneRigged } from '@/game/cloneRigged'
 import type { ThreeElements } from '@react-three/fiber'
 import { useGameStore } from '../store'
@@ -81,7 +80,6 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
   const group = useRef<THREE.Group>(null)
   const swordRef2 = useRef<THREE.Group>(null)
   const target = useRef<THREE.Mesh>(null)
-  const armorGroup = useRef<THREE.Group>(null)
   const slashEmitterRef = useRef<{ emit: (overrides?: Record<string, unknown>) => void } | null>(
     null
   )
@@ -205,7 +203,6 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
     const visual = computeGearVisual(selectedCharacter, gear, charDef.weapon)
     const showSet = new Set(visual.show)
     const hideSet = new Set(visual.hide)
-    const armorSet = new Set(visual.fullArmor ? ['helmet', 'chest', 'arms', 'legs', 'cape'] : [])
     clone.traverse((obj) => {
       // Reset every gear-touchable attachment to its base state first so
       // cleared/replaced gear never leaves orphans visible
@@ -214,13 +211,6 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
       }
       if (showSet.has(obj.name)) obj.visible = true
       if (hideSet.has(obj.name)) obj.visible = false
-      // Hide base body meshes when full armor overrides the entire kit
-      if (armorSet.size > 0 && obj.name !== charDef.weapon && !obj.isBone) {
-        const isWeapon = obj.name.includes('Sword') || obj.name.includes('Axe') || obj.name.includes('Staff') || obj.name.includes('Wand') || obj.name.includes('Crossbow') || obj.name.includes('Knife') || obj.name.includes('Throwable') || obj.name.includes('Shield') || obj.name.includes('Spellbook') || obj.name.includes('Mug')
-        if (!isWeapon && obj.isMesh) {
-          obj.visible = false
-        }
-      }
       if (visual.weaponNode && obj.name === visual.weaponNode) {
         const mesh = obj as THREE.Mesh
         if (mesh.isMesh) {
@@ -235,70 +225,70 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
     setGearVisual(visual)
   }, [clone, gear, charDef, selectedCharacter])
 
-  // Full armor — load external GLB and attach its meshes to matching skeleton bones
-  useEffect(() => {
-    const group = armorGroup.current
-    if (!group) return
-    group.clear()
-
-    const armorPath = gearVisual.fullArmor
-    if (!armorPath) return
-
-    const loader = new GLTFLoader()
-    loader.load(
-      armorPath,
-      (gltf) => {
-        const armorScene = gltf.scene.clone(true)
-        
-        // Refresh skeleton world matrices before bone lookup
-        clone.updateWorldMatrix(true, false)
-        
-        const bones = new Map<string, THREE.Bone>()
-        clone.traverse((obj) => {
-          if (obj.isBone) bones.set(obj.name, obj)
-        })
-        
-        const matchedBones = new Set<string>()
-        const unmatchedMeshes: string[] = []
-        
-        armorScene.traverse((child) => {
-          if (!child.isMesh) return
-          
-          child.material = Array.isArray(child.material)
-            ? child.material.map((m) => m.clone())
-            : child.material.clone()
-
-          const bone = bones.get(child.name)
-          if (bone) {
-            matchedBones.add(child.name)
-            // Reset mesh transform and parent to bone
-            child.position.set(0, 0, 0)
-            child.rotation.set(0, 0, 0)
-            child.scale.set(1, 1, 1)
-            child.updateMatrix()
-            bone.add(child)
-          } else {
-            unmatchedMeshes.push(child.name)
-            child.applyMatrix4(new THREE.Matrix4())
-            group.add(child)
-          }
-        })
-        
-        if (unmatchedMeshes.length > 0) {
-          console.warn('[FullArmor] Unmatched meshes (no bone found):', unmatchedMeshes)
-          console.warn('[FullArmor] Available bones:', Array.from(bones.keys()))
-        }
-      },
-      undefined,
-      (err) => {
-        console.error('Failed to load full armor:', armorPath, err)
-      }
-    )
-
-    return () => {
-      group.clear()
-    }
-  }, [clone, gearVisual.fullArmor])
+  // Full armor — disabled for now, re-enable when full-character GLBs are ready
+  // useEffect(() => {
+  //   const group = armorGroup.current
+  //   if (!group) return
+  //   group.clear()
+  //
+  //   const armorPath = gearVisual.fullArmor
+  //   if (!armorPath) return
+  //
+  //   const loader = new GLTFLoader()
+  //   loader.load(
+  //     armorPath,
+  //     (gltf) => {
+  //       const armorScene = gltf.scene.clone(true)
+  //
+  //       // Refresh skeleton world matrices before bone lookup
+  //       clone.updateWorldMatrix(true, false)
+  //
+  //       const bones = new Map<string, THREE.Bone>()
+  //       clone.traverse((obj) => {
+  //         if (obj.isBone) bones.set(obj.name, obj)
+  //       })
+  //
+  //       const matchedBones = new Set<string>()
+  //       const unmatchedMeshes: string[] = []
+  //
+  //       armorScene.traverse((child) => {
+  //         if (!child.isMesh) return
+  //
+  //         child.material = Array.isArray(child.material)
+  //           ? child.material.map((m) => m.clone())
+  //           : child.material.clone()
+  //
+  //         const bone = bones.get(child.name)
+  //         if (bone) {
+  //           matchedBones.add(child.name)
+  //           // Reset mesh transform and parent to bone
+  //           child.position.set(0, 0, 0)
+  //           child.rotation.set(0, 0, 0)
+  //           child.scale.set(1, 1, 1)
+  //           child.updateMatrix()
+  //           bone.add(child)
+  //         } else {
+  //           unmatchedMeshes.push(child.name)
+  //           child.applyMatrix4(new THREE.Matrix4())
+  //           group.add(child)
+  //         }
+  //       })
+  //
+  //       if (unmatchedMeshes.length > 0) {
+  //         console.warn('[FullArmor] Unmatched meshes (no bone found):', unmatchedMeshes)
+  //         console.warn('[FullArmor] Available bones:', Array.from(bones.keys()))
+  //       }
+  //     },
+  //     undefined,
+  //     (err) => {
+  //       console.error('Failed to load full armor:', armorPath, err)
+  //     }
+  //   )
+  //
+  //   return () => {
+  //     group.clear()
+  //   }
+  // }, [clone, gearVisual.fullArmor])
 
   // Controller hook - handles all animation logic with character-specific clips
   const controller = useCapsController({
@@ -391,7 +381,6 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
         <primitive object={clone} />
         {gearVisual.trinketColor && <TrinketOrbiter color={gearVisual.trinketColor} />}
         {gearVisual.wardColor && <WardRing color={gearVisual.wardColor} />}
-        <group ref={armorGroup} />
       </group>
     </>
   )

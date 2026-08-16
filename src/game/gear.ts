@@ -311,7 +311,7 @@ export const computeGearVisual = (
   if (armor) {
     const fullArmorGlb = resolveFullArmorGlb(armor.name)
     if (fullArmorGlb) {
-      fullArmor = fullArmorGlb
+      fullArmor = null // Disabled until full-character GLBs are ready
       if (characterId === 'knight') {
         hide.push(...KNIGHT_SHIELDS)
       } else if (characterId === 'barbarian') {
