@@ -69,9 +69,9 @@ const METEOR_DAMAGE = 32
 
 /** Shadowstep + vanish tuning (Nightshade) */
 const SHADOWSTEP_STRIKE_S = 0.35
-const SHADOWSTEP_DAMAGE = 45
+const SHADOWSTEP_DAMAGE = 28
 const VANISH_S = 1.2
-const VANISH_DAMAGE = 38
+const VANISH_DAMAGE = 22
 const BACKSTAB_RADIUS = 2.4
 
 const clampArena = (v: number) => Math.max(-ARENA_BOUND, Math.min(ARENA_BOUND, v))

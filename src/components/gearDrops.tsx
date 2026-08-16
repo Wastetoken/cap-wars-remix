@@ -157,8 +157,8 @@ const GearDrop = ({
   ringRefs: React.RefObject<Map<number, { mesh: THREE.Mesh; u: EnergyUniforms }>>
 }) => {
   const rarityColor = RARITY_COLORS[drop.piece.rarity]
-  let modelUrl = DROP_MODELS[drop.piece.slot]?.[drop.piece.rarity]
-  if (!modelUrl && drop.piece.slot === 'weapon') {
+  let modelUrl: string | undefined
+  if (drop.piece.slot === 'weapon') {
     modelUrl = resolveExternalWeaponGlb(drop.piece.name)
   }
   if (!modelUrl && drop.piece.slot === 'armor') {
@@ -168,6 +168,9 @@ const GearDrop = ({
     } else if (lower.includes('square')) {
       modelUrl = drop.piece.rarity === 'epic' ? '/items/shield-square-cv.glb' : '/items/shield-square-cs.glb'
     }
+  }
+  if (!modelUrl) {
+    modelUrl = DROP_MODELS[drop.piece.slot]?.[drop.piece.rarity]
   }
   const { material, uniforms } = useMemo(
     () => createEnergyRingMaterial(rarityColor, '#ffffff', 5),
