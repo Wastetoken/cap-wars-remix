@@ -158,7 +158,7 @@ const BlockButton = () => (
     onPointerCancel={() => eventBus.emit(EVENTS.TOUCH_BLOCK_END)}
   >
     <span className="touch-btn-disc">
-      <img className="touch-btn-icon" src="/ui/icons/block.png" alt="Block" draggable={false} />
+      <span className="touch-btn-icon" style={{ fontSize: '28px' }}>🛡️</span>
     </span>
     <span className="touch-btn-sub">Block</span>
   </div>

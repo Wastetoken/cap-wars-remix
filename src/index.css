@@ -1067,6 +1067,14 @@ canvas {
   font-size: 22px;
 }
 
+.touch-block {
+  right: 76px;
+  bottom: 4px;
+  width: 62px;
+  height: 62px;
+  border-color: rgba(216, 180, 110, 0.55);
+}
+
 .touch-btn-sub {
   font-size: 8px;
   letter-spacing: 0.4px;
