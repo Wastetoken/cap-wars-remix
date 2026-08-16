@@ -249,24 +249,45 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
       armorPath,
       (gltf) => {
         const armorScene = gltf.scene.clone(true)
+        
+        // Refresh skeleton world matrices before bone lookup
+        clone.updateWorldMatrix(true, false)
+        
         const bones = new Map<string, THREE.Bone>()
         clone.traverse((obj) => {
           if (obj.isBone) bones.set(obj.name, obj)
         })
+        
+        const matchedBones = new Set<string>()
+        const unmatchedMeshes: string[] = []
+        
         armorScene.traverse((child) => {
-          if (child.isMesh) {
-            child.material = Array.isArray(child.material)
-              ? child.material.map((m) => m.clone())
-              : child.material.clone()
+          if (!child.isMesh) return
+          
+          child.material = Array.isArray(child.material)
+            ? child.material.map((m) => m.clone())
+            : child.material.clone()
 
-            const bone = bones.get(child.name)
-            if (bone) {
-              bone.add(child)
-            } else {
-              group.add(child)
-            }
+          const bone = bones.get(child.name)
+          if (bone) {
+            matchedBones.add(child.name)
+            // Reset mesh transform and parent to bone
+            child.position.set(0, 0, 0)
+            child.rotation.set(0, 0, 0)
+            child.scale.set(1, 1, 1)
+            child.updateMatrix()
+            bone.add(child)
+          } else {
+            unmatchedMeshes.push(child.name)
+            child.applyMatrix4(new THREE.Matrix4())
+            group.add(child)
           }
         })
+        
+        if (unmatchedMeshes.length > 0) {
+          console.warn('[FullArmor] Unmatched meshes (no bone found):', unmatchedMeshes)
+          console.warn('[FullArmor] Available bones:', Array.from(bones.keys()))
+        }
       },
       undefined,
       (err) => {
