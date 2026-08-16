@@ -1279,6 +1279,15 @@ canvas {
   background: rgba(229, 224, 213, 0.15);
 }
 
+/* On touch devices move loadout to top-left so it doesn't collide with the pause button */
+.hud.touch-mode .loadout-button {
+  right: auto;
+  left: calc(14px + env(safe-area-inset-left, 0px));
+  top: calc(14px + env(safe-area-inset-top, 0px));
+  font-size: 12px;
+  padding: 7px 10px;
+}
+
 /* Loadout sheet */
 .loadout-panel {
   width: min(880px, 94vw);
