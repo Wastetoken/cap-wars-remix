@@ -25,6 +25,12 @@ const FADE_OUT = 1000
 
 let nextPatchId = 1
 
+/** Shared read-only view of active ice patches for enemy systems */
+const _icePatches: Patch[] = []
+export const getIcePatches = () => _icePatches
+export const ICE_PATCH_RADIUS = 2.25
+export const ICE_SLOW_AMOUNT = 0.5
+
 export const IceFloors = () => {
   const [patches, setPatches] = useState<Patch[]>([])
   const patchRefs = useRef(new Map<number, { u: EnergyUniforms }>())
@@ -32,10 +38,9 @@ export const IceFloors = () => {
   useEffect(() => {
     const onCast = (id: string, position: THREE.Vector3) => {
       if (id !== 'nova') return
-      setPatches((prev) => [
-        ...prev,
-        { id: nextPatchId++, x: position.x, z: position.z, bornAt: performance.now() },
-      ])
+      const patch: Patch = { id: nextPatchId++, x: position.x, z: position.z, bornAt: performance.now() }
+      setPatches((prev) => [...prev, patch])
+      _icePatches.push(patch)
     }
 
     eventBus.on(EVENTS.ABILITY_CAST, onCast)
@@ -69,6 +74,9 @@ export const IceFloors = () => {
     if (expired.length > 0) {
       for (const id of expired) patchRefs.current.delete(id)
       setPatches((prev) => prev.filter((p) => !expired.includes(p.id)))
+      for (let i = _icePatches.length - 1; i >= 0; i--) {
+        if (expired.includes(_icePatches[i].id)) _icePatches.splice(i, 1)
+      }
     }
   })
 

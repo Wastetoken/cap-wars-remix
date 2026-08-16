@@ -1,4 +1,5 @@
 import type { World } from 'koota'
+
 import {
   IsEnemy,
   Position,
@@ -21,7 +22,7 @@ import { useGameStore, isGameFrozen } from '@/store'
 import { checkCircleCollision, Layer } from '@/collision'
 import { ARENA_BOUND } from '@/constants'
 import { MOBS, type MobType } from '@/game/mobs'
-
+import { getIcePatches, ICE_PATCH_RADIUS, ICE_SLOW_AMOUNT } from '@/components/iceFloor'
 /** Damping factor for velocity smoothing (higher = snappier, lower = smoother).
  *  At 6, a mob moving at full speed coasts ~speed/6 units after stopping —
  *  short enough that melee mobs don't slide into the player. */
@@ -42,10 +43,21 @@ const ATTACK_HOLDOFF = 0.3
  * Updates enemy positions based on velocity
  */
 export function movementSystem(world: World, delta: number) {
+  const patches = getIcePatches()
   world.query(IsEnemy, Position, Velocity, Speed).updateEach(([pos, vel, speed]) => {
-    pos.x += vel.x * speed.value * delta
-    pos.y += vel.y * speed.value * delta
-    pos.z += vel.z * speed.value * delta
+    let speedMult = 1
+    for (let i = 0; i < patches.length; i++) {
+      const patch = patches[i]
+      const dx = pos.x - patch.x
+      const dz = pos.z - patch.z
+      if (dx * dx + dz * dz < ICE_PATCH_RADIUS * ICE_PATCH_RADIUS) {
+        speedMult = ICE_SLOW_AMOUNT
+        break
+      }
+    }
+    pos.x += vel.x * speed.value * speedMult * delta
+    pos.y += vel.y * speed.value * speedMult * delta
+    pos.z += vel.z * speed.value * speedMult * delta
   })
 }
 
