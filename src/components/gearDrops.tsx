@@ -4,7 +4,7 @@ import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { eventBus, EVENTS } from '@/constants'
 import { useGameStore, isGameFrozen } from '@/store'
-import { rollGearDrop, RARITY_COLORS, type GearPiece, type GearRarity, type GearSlot } from '@/game/gear'
+import { rollGearDrop, RARITY_COLORS, resolveExternalWeaponGlb, type GearPiece, type GearRarity, type GearSlot } from '@/game/gear'
 import { createEnergyRingMaterial, type EnergyUniforms } from './vfx/energy'
 
 // ============================================================================
@@ -157,7 +157,18 @@ const GearDrop = ({
   ringRefs: React.RefObject<Map<number, { mesh: THREE.Mesh; u: EnergyUniforms }>>
 }) => {
   const rarityColor = RARITY_COLORS[drop.piece.rarity]
-  const modelUrl = DROP_MODELS[drop.piece.slot]?.[drop.piece.rarity]
+  let modelUrl = DROP_MODELS[drop.piece.slot]?.[drop.piece.rarity]
+  if (!modelUrl && drop.piece.slot === 'weapon') {
+    modelUrl = resolveExternalWeaponGlb(drop.piece.name)
+  }
+  if (!modelUrl && drop.piece.slot === 'armor') {
+    const lower = drop.piece.name.toLowerCase()
+    if (lower.includes('spiked')) {
+      modelUrl = drop.piece.rarity === 'epic' ? '/items/shield-spiked-cv.glb' : '/items/shield-spiked-cs.glb'
+    } else if (lower.includes('square')) {
+      modelUrl = drop.piece.rarity === 'epic' ? '/items/shield-square-cv.glb' : '/items/shield-square-cs.glb'
+    }
+  }
   const { material, uniforms } = useMemo(
     () => createEnergyRingMaterial(rarityColor, '#ffffff', 5),
     [rarityColor]
@@ -255,3 +266,15 @@ useGLTF.preload('/items/shield_badge_color.gltf')
 useGLTF.preload('/items/spellbook_closed.gltf')
 useGLTF.preload('/items/spellbook_open.gltf')
 useGLTF.preload('/items/smokebomb.gltf')
+useGLTF.preload('/items/1h-sword-upgrade-cv.glb')
+useGLTF.preload('/items/1h-sword-upgrade-cs.glb')
+useGLTF.preload('/items/2h-axe-upgrade-cv.glb')
+useGLTF.preload('/items/2h-axe-upgrade-cs.glb')
+useGLTF.preload('/items/staff-upgrade-cv.glb')
+useGLTF.preload('/items/staff-upgrade-cs.glb')
+useGLTF.preload('/items/dagger-upgrade-cv.glb')
+useGLTF.preload('/items/dagger-upgrade-cs.glb')
+useGLTF.preload('/items/shield-spiked-cv.glb')
+useGLTF.preload('/items/shield-spiked-cs.glb')
+useGLTF.preload('/items/shield-square-cv.glb')
+useGLTF.preload('/items/shield-square-cs.glb')

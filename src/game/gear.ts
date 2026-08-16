@@ -179,12 +179,12 @@ export type GearVisual = {
   hide: string[]
   /** The node that should carry the sword aura material */
   weaponNode: string | null
+  /** External weapon GLB path — loaded and parented to weaponNode at runtime */
+  externalWeapon: string | null
   /** Ward ring color at the feet (boots, or mage's armor ward) */
   wardColor: string | null
-  /** Orbiting trinket charm color */
+  /** Orbiting trinket charm */
   trinketColor: string | null
-  /** Full armor override meshes (helmet/chest/arms/legs/cape) */
-  fullArmor: string | null
 }
 
 const rarityRank = (r: GearRarity) => RARITY_RANK[r]
@@ -200,25 +200,32 @@ const bestInSlot = (gear: GearPiece[], slot: GearSlot): GearPiece | null =>
 /** Per-class attachment loadout for a given weapon/armor rarity */
 const WEAPON_ATTACHMENTS: Record<
   string,
-  Partial<Record<GearRarity, { show: string[]; hide: string[]; node: string }>>
+  Partial<Record<GearRarity, { show: string[]; hide: string[]; node: string; external?: string }>>
 > = {
   knight: {
     common: { show: ['1H_Sword'], hide: [], node: '1H_Sword' },
     rare: { show: ['1H_Sword', '1H_Sword_Offhand'], hide: [], node: '1H_Sword' },
-    epic: { show: ['2H_Sword'], hide: ['1H_Sword', '1H_Sword_Offhand'], node: '2H_Sword' },
-    legendary: { show: ['2H_Sword'], hide: ['1H_Sword', '1H_Sword_Offhand'], node: '2H_Sword' },
+    epic: { show: ['1H_Sword'], hide: ['1H_Sword_Offhand'], node: '1H_Sword', external: '/items/1h-sword-upgrade-cv.glb' },
+    legendary: { show: ['1H_Sword'], hide: ['1H_Sword_Offhand'], node: '1H_Sword', external: '/items/1h-sword-upgrade-cs.glb' },
   },
   barbarian: {
-    rare: { show: ['1H_Axe_Offhand'], hide: [], node: '2H_Axe' },
-    epic: { show: ['1H_Axe_Offhand'], hide: [], node: '2H_Axe' },
-    legendary: { show: ['1H_Axe_Offhand'], hide: [], node: '2H_Axe' },
+    common: { show: ['2H_Axe'], hide: [], node: '2H_Axe' },
+    rare: { show: ['2H_Axe', '1H_Axe_Offhand'], hide: [], node: '2H_Axe' },
+    epic: { show: ['2H_Axe', '1H_Axe_Offhand'], hide: [], node: '2H_Axe', external: '/items/2h-axe-upgrade-cv.glb' },
+    legendary: { show: ['2H_Axe', '1H_Axe_Offhand'], hide: [], node: '2H_Axe', external: '/items/2h-axe-upgrade-cs.glb' },
   },
   mage: {
+    common: { show: ['2H_Staff'], hide: [], node: '2H_Staff' },
     rare: { show: ['Spellbook'], hide: [], node: '2H_Staff' },
-    epic: { show: ['Spellbook_open'], hide: ['Spellbook'], node: '2H_Staff' },
-    legendary: { show: ['Spellbook_open'], hide: ['Spellbook'], node: '2H_Staff' },
+    epic: { show: ['2H_Staff'], hide: ['Spellbook'], node: '2H_Staff', external: '/items/staff-upgrade-cv.glb' },
+    legendary: { show: ['2H_Staff'], hide: ['Spellbook'], node: '2H_Staff', external: '/items/staff-upgrade-cs.glb' },
   },
-  // rogue: dual knives already — the aura carries the upgrade
+  rogue: {
+    common: { show: ['Throwable'], hide: [], node: 'Throwable' },
+    rare: { show: ['Throwable'], hide: [], node: 'Throwable' },
+    epic: { show: ['Throwable'], hide: [], node: 'Throwable', external: '/items/dagger-upgrade-cv.glb' },
+    legendary: { show: ['Throwable'], hide: [], node: 'Throwable', external: '/items/dagger-upgrade-cs.glb' },
+  },
 }
 
 const FULL_ARMOR_GLBS: Record<string, string> = {
@@ -240,6 +247,34 @@ export const resolveFullArmorGlb = (name: string): string | null => {
   for (const [alias, key] of Object.entries(FULL_ARMOR_ALIASES)) {
     if (lower.includes(alias)) {
       return FULL_ARMOR_GLBS[key] ?? null
+    }
+  }
+  return null
+}
+
+const EXTERNAL_WEAPON_GLBS: Record<string, string> = {
+  '1h-sword-upgrade-cv': '/items/1h-sword-upgrade-cv.glb',
+  '1h-sword-upgrade-cs': '/items/1h-sword-upgrade-cs.glb',
+  '2h-axe-upgrade-cv': '/items/2h-axe-upgrade-cv.glb',
+  '2h-axe-upgrade-cs': '/items/2h-axe-upgrade-cs.glb',
+  'staff-upgrade-cv': '/items/staff-upgrade-cv.glb',
+  'staff-upgrade-cs': '/items/staff-upgrade-cs.glb',
+  'dagger-upgrade-cv': '/items/dagger-upgrade-cv.glb',
+  'dagger-upgrade-cs': '/items/dagger-upgrade-cs.glb',
+}
+
+const EXTERNAL_WEAPON_ALIASES: Record<string, string> = {
+  '1h-sword': '1h-sword-upgrade-cv',
+  '2h-axe': '2h-axe-upgrade-cv',
+  'staff': 'staff-upgrade-cv',
+  'dagger': 'dagger-upgrade-cv',
+}
+
+export const resolveExternalWeaponGlb = (name: string): string | null => {
+  const lower = name.toLowerCase()
+  for (const [alias, key] of Object.entries(EXTERNAL_WEAPON_ALIASES)) {
+    if (lower.includes(alias)) {
+      return EXTERNAL_WEAPON_GLBS[key] ?? null
     }
   }
   return null
@@ -291,6 +326,7 @@ export const computeGearVisual = (
   const show: string[] = []
   const hide: string[] = []
   let weaponNode: string | null = null
+  let externalWeapon: string | null = null
   let wardColor: string | null = null
   let trinketColor: string | null = null
   let fullArmor: string | null = null
@@ -302,6 +338,7 @@ export const computeGearVisual = (
       show.push(...table.show)
       hide.push(...table.hide)
       weaponNode = table.node
+      if (table.external) externalWeapon = table.external
     }
     // A weapon piece always at least tints the aura on the base weapon
     if (!weaponNode) weaponNode = baseWeapon
@@ -343,5 +380,5 @@ export const computeGearVisual = (
   const trinket = bestInSlot(gear, 'trinket')
   if (trinket) trinketColor = RARITY_COLORS[trinket.rarity]
 
-  return { show, hide, weaponNode, wardColor, trinketColor, fullArmor }
+  return { show, hide, weaponNode, externalWeapon, wardColor, trinketColor, fullArmor }
 }

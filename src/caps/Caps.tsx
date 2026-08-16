@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { useRef, useEffect, useImperativeHandle, forwardRef, useMemo, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
+import { GLTFLoader } from 'three-stdlib'
 import { cloneRigged } from '@/game/cloneRigged'
 import type { ThreeElements } from '@react-three/fiber'
 import { useGameStore } from '../store'
@@ -80,6 +81,7 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
   const group = useRef<THREE.Group>(null)
   const swordRef2 = useRef<THREE.Group>(null)
   const target = useRef<THREE.Mesh>(null)
+  const externalWeaponGroup = useRef<THREE.Group>(null)
   const slashEmitterRef = useRef<{ emit: (overrides?: Record<string, unknown>) => void } | null>(
     null
   )
@@ -290,6 +292,60 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
   //   }
   // }, [clone, gearVisual.fullArmor])
 
+  // External weapon GLB — load and parent to the character's weapon bone
+  useEffect(() => {
+    const group = externalWeaponGroup.current
+    if (!group) return
+    group.clear()
+
+    const weaponPath = gearVisual.externalWeapon
+    if (!weaponPath) return
+
+    const loader = new GLTFLoader()
+    loader.load(
+      weaponPath,
+      (gltf) => {
+        const weaponScene = gltf.scene.clone(true)
+        
+        clone.updateWorldMatrix(true, false)
+        
+        const bones = new Map<string, THREE.Bone>()
+        clone.traverse((obj) => {
+          if (obj.isBone) bones.set(obj.name, obj)
+        })
+        
+        const targetBoneName = gearVisual.weaponNode || charDef.weapon
+        const targetBone = bones.get(targetBoneName)
+        
+        if (targetBone) {
+          weaponScene.traverse((child) => {
+            if (child.isMesh) {
+              child.material = Array.isArray(child.material)
+                ? child.material.map((m) => m.clone())
+                : child.material.clone()
+              child.position.set(0, 0, 0)
+              child.rotation.set(0, 0, 0)
+              child.scale.set(1, 1, 1)
+              child.updateMatrix()
+              targetBone.add(child)
+            }
+          })
+        } else {
+          console.warn(`[ExternalWeapon] Bone "${targetBoneName}" not found, adding to group`)
+          group.add(weaponScene)
+        }
+      },
+      undefined,
+      (err) => {
+        console.error('Failed to load external weapon:', weaponPath, err)
+      }
+    )
+
+    return () => {
+      group.clear()
+    }
+  }, [clone, gearVisual.externalWeapon, gearVisual.weaponNode, charDef.weapon])
+
   // Controller hook - handles all animation logic with character-specific clips
   const controller = useCapsController({
     actions,
@@ -381,6 +437,7 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
         <primitive object={clone} />
         {gearVisual.trinketColor && <TrinketOrbiter color={gearVisual.trinketColor} />}
         {gearVisual.wardColor && <WardRing color={gearVisual.wardColor} />}
+        <group ref={externalWeaponGroup} />
       </group>
     </>
   )
@@ -391,3 +448,13 @@ useGLTF.preload('/character/Knight.glb')
 useGLTF.preload('/character/Barbarian.glb')
 useGLTF.preload('/character/Rogue.glb')
 useGLTF.preload('/character/Mage.glb')
+
+// Preload external weapon upgrades
+useGLTF.preload('/items/1h-sword-upgrade-cv.glb')
+useGLTF.preload('/items/1h-sword-upgrade-cs.glb')
+useGLTF.preload('/items/2h-axe-upgrade-cv.glb')
+useGLTF.preload('/items/2h-axe-upgrade-cs.glb')
+useGLTF.preload('/items/staff-upgrade-cv.glb')
+useGLTF.preload('/items/staff-upgrade-cs.glb')
+useGLTF.preload('/items/dagger-upgrade-cv.glb')
+useGLTF.preload('/items/dagger-upgrade-cs.glb')
