@@ -221,6 +221,30 @@ const WEAPON_ATTACHMENTS: Record<
   // rogue: dual knives already — the aura carries the upgrade
 }
 
+const FULL_ARMOR_GLBS: Record<string, string> = {
+  'barkhide raiment': '/items/barbarian-full-bark.glb',
+  'ornamental oath': '/items/knight-armor-full-ornamental.glb',
+  'lavaweave vestments': '/items/mage-full-lava.glb',
+  'pinebound leathers': '/items/rogue-full-pine.glb',
+}
+
+const FULL_ARMOR_ALIASES: Record<string, string> = {
+  'barkhide': 'barkhide raiment',
+  'ornamental': 'ornamental oath',
+  'lavaweave': 'lavaweave vestments',
+  'pinebound': 'pinebound leathers',
+}
+
+export const resolveFullArmorGlb = (name: string): string | null => {
+  const lower = name.toLowerCase()
+  for (const [alias, key] of Object.entries(FULL_ARMOR_ALIASES)) {
+    if (lower.includes(alias)) {
+      return FULL_ARMOR_GLBS[key] ?? null
+    }
+  }
+  return null
+}
+
 const ARMOR_ATTACHMENTS: Record<string, Partial<Record<GearRarity, { show: string[] }>>> = {
   knight: {
     common: { show: ['Round_Shield'] },
@@ -269,6 +293,7 @@ export const computeGearVisual = (
   let weaponNode: string | null = null
   let wardColor: string | null = null
   let trinketColor: string | null = null
+  let fullArmor: string | null = null
 
   const weapon = bestInSlot(gear, 'weapon')
   if (weapon) {
@@ -284,14 +309,24 @@ export const computeGearVisual = (
 
   const armor = bestInSlot(gear, 'armor')
   if (armor) {
-    const table = ARMOR_ATTACHMENTS[characterId]?.[armor.rarity]
-    if (table) {
-      // Knight shields are tiered — hide the lower tiers
-      if (characterId === 'knight') hide.push(...KNIGHT_SHIELDS.filter((s) => !table.show.includes(s)))
-      show.push(...table.show)
+    const fullArmorGlb = resolveFullArmorGlb(armor.name)
+    if (fullArmorGlb) {
+      fullArmor = fullArmorGlb
+      if (characterId === 'knight') {
+        hide.push(...KNIGHT_SHIELDS)
+      } else if (characterId === 'barbarian') {
+        hide.push('Barbarian_Round_Shield')
+      }
     } else {
-      // No attachment for this class — armor becomes a ward ring
-      wardColor = RARITY_COLORS[armor.rarity]
+      const table = ARMOR_ATTACHMENTS[characterId]?.[armor.rarity]
+      if (table) {
+        // Knight shields are tiered — hide the lower tiers
+        if (characterId === 'knight') hide.push(...KNIGHT_SHIELDS.filter((s) => !table.show.includes(s)))
+        show.push(...table.show)
+      } else {
+        // No attachment for this class — armor becomes a ward ring
+        wardColor = RARITY_COLORS[armor.rarity]
+      }
     }
   } else if (characterId === 'knight') {
     show.push('Round_Shield')
@@ -308,5 +343,5 @@ export const computeGearVisual = (
   const trinket = bestInSlot(gear, 'trinket')
   if (trinket) trinketColor = RARITY_COLORS[trinket.rarity]
 
-  return { show, hide, weaponNode, wardColor, trinketColor }
+  return { show, hide, weaponNode, wardColor, trinketColor, fullArmor }
 }
