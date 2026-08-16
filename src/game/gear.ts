@@ -118,14 +118,20 @@ export const rollGearDrop = (id: number, souls: number, characterId?: string): G
   const chance = isBoss ? 1 : isElite ? 0.16 : 0.07
   if (Math.random() >= chance) return null
 
-  const rarity = rollRarity(isBoss ? 0.18 : isElite ? 0.05 : 0)
+  const luck = isBoss ? 0.18 : isElite ? 0.05 : 0
+  const rarity = rollRarity(luck)
   const slot = SLOTS[Math.floor(Math.random() * SLOTS.length)]
   const def = SLOT_DEFS[slot]
   const rolled = def.roll(RARITY_MULT[rarity])
   const namePool = characterId && def.characterNames?.[characterId] ? def.characterNames[characterId] : def.names
-  const name = `${RARITY_NAMES[rarity]} ${namePool[Math.floor(Math.random() * namePool.length)]}`
+  const rawName = namePool[Math.floor(Math.random() * namePool.length)]
+  const isFullArmor = slot === 'armor' && rawName.includes('-full-')
+  const isCv = rawName.includes('-cv')
+  const isCs = rawName.includes('-cs')
+  const finalRarity = isFullArmor ? 'legendary' : isCv ? 'epic' : isCs ? 'legendary' : rarity
+  const name = `${RARITY_NAMES[finalRarity]} ${rawName}`
 
-  return { id, slot, rarity, name, ...rolled }
+  return { id, slot, rarity: finalRarity, name, ...rolled }
 }
 
 // ---------------------------------------------------------------------------
@@ -237,7 +243,7 @@ const ARMOR_ATTACHMENTS: Record<string, Partial<Record<GearRarity, { show: strin
   // mage: no shield attachment — armor shows as a ward ring instead
 }
 
-const KNIGHT_SHIELDS = ['Round_Shield', 'Rectangle_Shield', 'Spike_Shield', 'Badge_Shield', 'Square_Shield_CV', 'Square_Shield_CS']
+const KNIGHT_SHIELDS = ['Round_Shield', 'Rectangle_Shield', 'Spike_Shield', 'Badge_Shield', 'Square_Shield']
 
 /** Every attachment gear can touch — used to reset worn state before re-applying */
 export const GEAR_ATTACHMENT_NAMES = [
@@ -249,8 +255,6 @@ export const GEAR_ATTACHMENT_NAMES = [
   'Spellbook_open',
   ...KNIGHT_SHIELDS,
   'Barbarian_Round_Shield',
-  'Spike_Shield_CV',
-  'Spike_Shield_CS',
   'Throwable',
 ]
 
