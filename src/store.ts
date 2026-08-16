@@ -525,6 +525,14 @@ export const useGameStore = create<GameState>((set, get) => {
         setAuthUser: (user) => set({ authUser: user }),
         gamePhase: 'login',
         setGamePhase: (phase) => set({ gamePhase: phase }),
+        startGame: () => {
+            get().resetRun()
+            set({ gamePhase: 'playing' })
+        },
+        quitToMenu: () => {
+            get().resetRun()
+            set({ gamePhase: 'menu' })
+        },
 
         // Persistence & settings
         settings,
