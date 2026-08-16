@@ -177,6 +177,7 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
 
   // One-time scene setup: hide unused attachments, shadows, grab the weapon node
   const [weapon, setWeapon] = useState<THREE.Object3D | null>(null)
+  const weaponRef = useRef<THREE.Mesh | null>(null)
   useEffect(() => {
     let weaponNode: THREE.Object3D | null = null
     clone.traverse((obj) => {
@@ -189,20 +190,22 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
       if (obj.name === charDef.weapon) {
         mesh.material = createSwordMaterial(Array.isArray(mesh.material) ? undefined : mesh.material)
         weaponNode = obj
+        weaponRef.current = mesh
       }
     })
     setWeapon(weaponNode)
   }, [clone, charDef])
-
   // Worn gear — show/hide attachments the loot grants, carry the sword aura
   // on the upgraded weapon node, and expose the ward/trinket colors.
   const [gearVisual, setGearVisual] = useState(() =>
     computeGearVisual(selectedCharacter, [], charDef.weapon)
   )
+
   useEffect(() => {
     const visual = computeGearVisual(selectedCharacter, gear, charDef.weapon)
     const showSet = new Set(visual.show)
     const hideSet = new Set(visual.hide)
+    const armorSet = new Set(visual.fullArmor ? ['helmet', 'chest', 'arms', 'legs', 'cape'] : [])
     clone.traverse((obj) => {
       // Reset every gear-touchable attachment to its base state first so
       // cleared/replaced gear never leaves orphans visible
@@ -211,6 +214,13 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
       }
       if (showSet.has(obj.name)) obj.visible = true
       if (hideSet.has(obj.name)) obj.visible = false
+      // Hide base body meshes when full armor overrides the entire kit
+      if (armorSet.size > 0 && obj.name !== charDef.weapon && !obj.isBone) {
+        const isWeapon = obj.name.includes('Sword') || obj.name.includes('Axe') || obj.name.includes('Staff') || obj.name.includes('Wand') || obj.name.includes('Crossbow') || obj.name.includes('Knife') || obj.name.includes('Throwable') || obj.name.includes('Shield') || obj.name.includes('Spellbook') || obj.name.includes('Mug')
+        if (!isWeapon && obj.isMesh) {
+          obj.visible = false
+        }
+      }
       if (visual.weaponNode && obj.name === visual.weaponNode) {
         const mesh = obj as THREE.Mesh
         if (mesh.isMesh) {
@@ -245,6 +255,10 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
         })
         armorScene.traverse((child) => {
           if (child.isMesh) {
+            child.material = Array.isArray(child.material)
+              ? child.material.map((m) => m.clone())
+              : child.material.clone()
+
             const bone = bones.get(child.name)
             if (bone) {
               bone.add(child)
