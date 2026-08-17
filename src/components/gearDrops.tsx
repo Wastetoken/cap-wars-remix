@@ -4,7 +4,7 @@ import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { eventBus, EVENTS } from '@/constants'
 import { useGameStore, isGameFrozen } from '@/store'
-import { rollGearDrop, RARITY_COLORS, resolveExternalWeaponGlb, type GearPiece, type GearRarity, type GearSlot } from '@/game/gear'
+import { rollGearDrop, RARITY_COLORS, resolveDropWeaponModel, type GearPiece, type GearRarity, type GearSlot } from '@/game/gear'
 import { createEnergyRingMaterial, type EnergyUniforms } from './vfx/energy'
 
 // ============================================================================
@@ -42,6 +42,7 @@ type Drop = {
   x: number
   z: number
   bornAt: number
+  modelUrl: string
 }
 
 const MAX_DROPS = 12
@@ -75,9 +76,31 @@ export const GearDrops = () => {
       const piece = rollGearDrop(nextDropId, baseSouls ?? _souls, characterId)
       if (!piece) return
       nextDropId++
+
+      let modelUrl: string
+      if (piece.slot === 'weapon') {
+        const external = resolveDropWeaponModel(characterId, piece.rarity)
+        if (external) {
+          modelUrl = external
+        } else {
+          modelUrl = DROP_MODELS[piece.slot]?.[piece.rarity] ?? ''
+        }
+      } else if (piece.slot === 'armor') {
+        const lower = piece.name.toLowerCase()
+        if (lower.includes('spiked')) {
+          modelUrl = piece.rarity === 'epic' ? '/items/shield-spiked-cv.glb' : '/items/shield-spiked-cs.glb'
+        } else if (lower.includes('square')) {
+          modelUrl = piece.rarity === 'epic' ? '/items/shield-square-cv.glb' : '/items/shield-square-cs.glb'
+        } else {
+          modelUrl = DROP_MODELS[piece.slot]?.[piece.rarity] ?? ''
+        }
+      } else {
+        modelUrl = DROP_MODELS[piece.slot]?.[piece.rarity] ?? ''
+      }
+
       setDrops((prev) => [
         ...prev.slice(-(MAX_DROPS - 1)),
-        { id: piece.id, piece, x: position.x, z: position.z, bornAt: performance.now() },
+        { id: piece.id, piece, x: position.x, z: position.z, bornAt: performance.now(), modelUrl },
       ])
     }
     eventBus.on(EVENTS.ENEMY_DEAD, onEnemyDead)
@@ -157,21 +180,7 @@ const GearDrop = ({
   ringRefs: React.RefObject<Map<number, { mesh: THREE.Mesh; u: EnergyUniforms }>>
 }) => {
   const rarityColor = RARITY_COLORS[drop.piece.rarity]
-  let modelUrl: string | undefined
-  if (drop.piece.slot === 'weapon') {
-    modelUrl = resolveExternalWeaponGlb(drop.piece.name)
-  }
-  if (!modelUrl && drop.piece.slot === 'armor') {
-    const lower = drop.piece.name.toLowerCase()
-    if (lower.includes('spiked')) {
-      modelUrl = drop.piece.rarity === 'epic' ? '/items/shield-spiked-cv.glb' : '/items/shield-spiked-cs.glb'
-    } else if (lower.includes('square')) {
-      modelUrl = drop.piece.rarity === 'epic' ? '/items/shield-square-cv.glb' : '/items/shield-square-cs.glb'
-    }
-  }
-  if (!modelUrl) {
-    modelUrl = DROP_MODELS[drop.piece.slot]?.[drop.piece.rarity]
-  }
+  const modelUrl = drop.modelUrl
   const { material, uniforms } = useMemo(
     () => createEnergyRingMaterial(rarityColor, '#ffffff', 5),
     [rarityColor]

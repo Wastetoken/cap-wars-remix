@@ -198,7 +198,7 @@ const bestInSlot = (gear: GearPiece[], slot: GearSlot): GearPiece | null =>
     )
 
 /** Per-class attachment loadout for a given weapon/armor rarity */
-const WEAPON_ATTACHMENTS: Record<
+export const WEAPON_ATTACHMENTS: Record<
   string,
   Partial<Record<GearRarity, { show: string[]; hide: string[]; node: string; external?: string }>>
 > = {
@@ -277,6 +277,15 @@ export const resolveExternalWeaponGlb = (name: string): string | null => {
       return EXTERNAL_WEAPON_GLBS[key] ?? null
     }
   }
+  return null
+}
+
+export const resolveDropWeaponModel = (
+  characterId: string,
+  rarity: GearRarity
+): string | null => {
+  const table = WEAPON_ATTACHMENTS[characterId]?.[rarity]
+  if (table?.external) return table.external
   return null
 }
 
