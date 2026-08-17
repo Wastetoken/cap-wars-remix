@@ -13,8 +13,6 @@ export const PostProcessing = () => {
   const postProcessingRef = useRef<THREE.PostProcessing>(null);
 
   useEffect(() => {
-    if (!postProcessingEnabled) return
-
     const scenePass = pass(scene, camera, {
       minFilter: THREE.LinearFilter,
       magFilter: THREE.LinearFilter,
@@ -22,13 +20,17 @@ export const PostProcessing = () => {
 
     const scenePassColor = scenePass.getTextureNode("output");
 
-    const center = vec2(0.5)
-    const vignette = smoothstep(0., 0.5, oneMinus(length(screenUV.sub(center))).pow(2.))
-
-    const bloomResult = bloom(scenePassColor, 0.25, 0.6, 0.85)
-
     const postProcessing = new THREE.PostProcessing(renderer);
-    postProcessing.outputNode = smaa(scenePassColor.mul(vignette).add(bloomResult));
+
+    if (postProcessingEnabled) {
+      const center = vec2(0.5)
+      const vignette = smoothstep(0., 0.5, oneMinus(length(screenUV.sub(center))).pow(2.))
+      const bloomResult = bloom(scenePassColor, 0.25, 0.6, 0.85)
+      postProcessing.outputNode = smaa(scenePassColor.mul(vignette).add(bloomResult));
+    } else {
+      postProcessing.outputNode = scenePassColor;
+    }
+
     postProcessingRef.current = postProcessing;
 
     return () => {
@@ -37,9 +39,10 @@ export const PostProcessing = () => {
   }, [renderer, scene, camera, postProcessingEnabled]);
 
   useFrame(() => {
-    if (!postProcessingEnabled || !postProcessingRef.current) return
-    renderer.clear();
-    postProcessingRef.current.render();
+    if (postProcessingRef.current) {
+      renderer.clear();
+      postProcessingRef.current.render();
+    }
   }, 1);
   return null;
 };
