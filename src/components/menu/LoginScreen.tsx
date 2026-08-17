@@ -59,13 +59,28 @@ export const LoginScreen = () => {
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
 
     const material = new THREE.PointsMaterial({
-      color: '#ff9a4d',
-      size: 0.08,
+      size: 0.25,
       transparent: true,
-      opacity: 0.6,
+      opacity: 0.85,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       sizeAttenuation: true,
+      map: (() => {
+        const canvas = document.createElement('canvas')
+        canvas.width = 32
+        canvas.height = 32
+        const ctx = canvas.getContext('2d')!
+        const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16)
+        gradient.addColorStop(0, 'rgba(255,255,255,1)')
+        gradient.addColorStop(0.2, 'rgba(255,180,100,0.9)')
+        gradient.addColorStop(0.5, 'rgba(255,100,30,0.4)')
+        gradient.addColorStop(1, 'rgba(0,0,0,0)')
+        ctx.fillStyle = gradient
+        ctx.fillRect(0, 0, 32, 32)
+        const texture = new THREE.CanvasTexture(canvas)
+        texture.needsUpdate = true
+        return texture
+      })(),
     })
 
     const points = new THREE.Points(geometry, material)
