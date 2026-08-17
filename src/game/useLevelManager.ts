@@ -23,6 +23,7 @@ export const useLevelManager = () => {
   const currentLevel = useGameStore((s) => s.currentLevel)
   const runId = useGameStore((s) => s.runId)
   const setWave = useGameStore((s) => s.setWave)
+  const setLoadingProgress = useGameStore((s) => s.setLoadingProgress)
 
   const waveIndex = useRef(0)
   const enemiesRemaining = useRef(0)
@@ -48,6 +49,7 @@ export const useLevelManager = () => {
 
     // Show loading screen immediately — this masks the spawn hitch.
     useGameStore.getState().setLevelLoading(true)
+    useGameStore.getState().setLoadingProgress(0)
 
     const startWave = (index: number) => {
       const composition = cfg.waves[index]
@@ -62,6 +64,7 @@ export const useLevelManager = () => {
       useGameStore.getState().setWave(index)
       eventBus.emit(EVENTS.WAVE_START, { wave: index + 1 })
       eventBus.emit(EVENTS.ANNOUNCE, `Wave ${index + 1} / ${cfg.waves.length}`)
+      setLoadingProgress(0)
 
       // Stagger spawns ~280ms apart on a ring around the arena. Cloning a
       // skinned KayKit model per mob is expensive, so spawning a whole wave
@@ -72,6 +75,7 @@ export const useLevelManager = () => {
         if (slot >= total) {
           // Last mob spawned — schedule loading screen dismissal after a buffer
           // so the user doesn't see enemies popping in.
+          setLoadingProgress(100)
           loadingTimer.current = window.setTimeout(() => {
             useGameStore.getState().setLevelLoading(false)
             eventBus.emit(EVENTS.ANNOUNCE, cfg.name, cfg.subtitle)
@@ -89,13 +93,15 @@ export const useLevelManager = () => {
         const angle = (slot / total) * Math.PI * 2 + Math.random() * 0.4
         spawnMob({
           mob: queue[slot],
-          position: { x: Math.cos(angle) * 8, y: 0, z: Math.sin(angle) * 8 },
+          position: { x: Math.cos(angle) * 12, y: 0, z: Math.sin(angle) * 12 },
         })
         slot++
+        setLoadingProgress(Math.round((slot / total) * 100))
         if (slot < total) {
           spawnTimers.current.push(window.setTimeout(spawnNext, 280))
         } else {
           // Wave fully queued — dismiss loading after buffer
+          setLoadingProgress(100)
           loadingTimer.current = window.setTimeout(() => {
             useGameStore.getState().setLevelLoading(false)
             eventBus.emit(EVENTS.ANNOUNCE, cfg.name, cfg.subtitle)

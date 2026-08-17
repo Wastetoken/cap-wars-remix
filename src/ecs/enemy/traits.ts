@@ -56,6 +56,7 @@ export const TargetVelocity = trait({ x: 0, y: 0, z: 0 })
 export const ShootTimer = trait(() => ({
   lastShot: Date.now(),
   nextShot: 3000 + Math.random() * 2000, // 3-5 seconds
+  bornAt: Date.now(),
 }))
 
 /** Which mob this entity is (key of MOBS) */

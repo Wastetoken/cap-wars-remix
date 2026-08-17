@@ -147,6 +147,8 @@ interface GameState {
     // Level loading state (masks spawn lag)
     isLevelLoading: boolean
     setLevelLoading: (loading: boolean) => void
+    loadingProgress: number
+    setLoadingProgress: (progress: number) => void
 
     // Auth
     authUser: any | null
@@ -519,6 +521,8 @@ export const useGameStore = create<GameState>((set, get) => {
         // Level loading state (masks spawn lag)
         isLevelLoading: false,
         setLevelLoading: (loading) => set({ isLevelLoading: loading }),
+        loadingProgress: 0,
+        setLoadingProgress: (progress) => set({ loadingProgress: progress }),
 
         // Auth
         authUser: null,

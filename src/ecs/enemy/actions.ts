@@ -71,6 +71,7 @@ export const enemyActions = createActions((world) => {
       ShootTimer({
         lastShot: 0,
         nextShot: def.attackCooldownMs * (0.8 + Math.random() * 0.6),
+        bornAt: Date.now(),
       }),
       MeshRef,
       // Bosses get their own state machine — immune to stun/knockback

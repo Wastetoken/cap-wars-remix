@@ -815,9 +815,10 @@ const VictoryScreen = () => {
 
 const LoadingOverlay = () => {
   const isLevelLoading = useGameStore((s) => s.isLevelLoading)
+  const loadingProgress = useGameStore((s) => s.loadingProgress)
   const currentLevel = useGameStore((s) => s.currentLevel)
 
   if (!isLevelLoading) return null
 
-  return <LoadingArt label={`Entering ${LEVELS[currentLevel]?.name ?? 'Dungeon'}`} />
+  return <LoadingArt label={`Entering ${LEVELS[currentLevel]?.name ?? 'Dungeon'}`} progress={loadingProgress} />
 }

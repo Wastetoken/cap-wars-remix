@@ -12,6 +12,21 @@ import loading2 from '@/Loading 2.png'
 
 const CROSSFADE_MS = 2600
 
+const LOADING_TIPS = [
+  'Dash through enemies to close gaps or escape tight spots',
+  'Parry just before an attack lands to stun your foe',
+  'Ice Nova slows all enemies caught in the freeze',
+  'Spin attack hits everything around you — great for crowds',
+  'Keep moving — standing still is the fastest way to die',
+  'Rare and legendary gear can drastically change your build',
+  'Cycle difficulty scales every time you descend deeper',
+  'Tap the gear icon to inspect your current loadout',
+  'Ranged attacks can chip bosses from a safe distance',
+  'Berserkers charge when they see you — bait and punish',
+]
+
+const pickTip = () => LOADING_TIPS[Math.floor(Math.random() * LOADING_TIPS.length)]
+
 export const LoadingArt = ({
   label,
   progress,
@@ -20,10 +35,16 @@ export const LoadingArt = ({
   progress?: number
 }) => {
   const [flip, setFlip] = useState(false)
+  const [tip, setTip] = useState(() => pickTip())
+
   useEffect(() => {
     const id = setInterval(() => setFlip((f) => !f), CROSSFADE_MS)
     return () => clearInterval(id)
   }, [])
+
+  useEffect(() => {
+    setTip(pickTip())
+  }, [label])
 
   const img = (src: string, visible: boolean) => (
     <img
@@ -55,7 +76,7 @@ export const LoadingArt = ({
       {img(loading1, !flip)}
       {img(loading2, flip)}
 
-      {/* Bottom-center status: optional label + slim progress bar */}
+      {/* Bottom-center status: label + progress + tip */}
       <div
         style={{
           position: 'absolute',
@@ -66,7 +87,7 @@ export const LoadingArt = ({
           flexDirection: 'column',
           alignItems: 'center',
           gap: 10,
-          width: 260,
+          width: 280,
         }}
       >
         {label && (
@@ -116,6 +137,21 @@ export const LoadingArt = ({
             </div>
           </>
         )}
+        <div
+          style={{
+            fontFamily: 'Cinzel, serif',
+            fontSize: 12,
+            fontStyle: 'italic',
+            letterSpacing: '0.15em',
+            color: 'rgba(232, 224, 207, 0.75)',
+            textShadow: '0 1px 8px rgba(0,0,0,0.9)',
+            textAlign: 'center',
+            lineHeight: 1.5,
+            maxWidth: 260,
+          }}
+        >
+          {tip}
+        </div>
       </div>
     </div>
   )

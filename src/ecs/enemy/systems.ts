@@ -83,6 +83,8 @@ export function syncMeshSystem(world: World) {
  * The actual swing (animation + damage) is emitted as ENEMY_ATTACK and
  * handled by the EnemyMesh component.
  */
+const SPAWN_GRACE_MS = 1500
+
 export function meleeBehaviorSystem(world: World) {
   const playerPosition = useGameStore.getState().playerPosition
   const now = Date.now()
@@ -98,6 +100,12 @@ export function meleeBehaviorSystem(world: World) {
 
       // Don't move or attack if stunned
       if (stunState.duration > 0) {
+        entity.set(TargetVelocity, { x: 0, y: 0, z: 0 })
+        return
+      }
+
+      // Spawn grace: give the player a moment to orient before enemies act
+      if (now - shootTimer.bornAt < SPAWN_GRACE_MS) {
         entity.set(TargetVelocity, { x: 0, y: 0, z: 0 })
         return
       }
@@ -184,6 +192,12 @@ export function rangeEnemyBehaviorSystem(world: World) {
 
       // Don't move or shoot if stunned
       if (stunState.duration > 0) {
+        entity.set(TargetVelocity, { x: 0, y: 0, z: 0 })
+        return
+      }
+
+      // Spawn grace: give the player a moment to orient before enemies act
+      if (now - shootTimer.bornAt < SPAWN_GRACE_MS) {
         entity.set(TargetVelocity, { x: 0, y: 0, z: 0 })
         return
       }
