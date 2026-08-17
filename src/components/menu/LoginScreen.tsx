@@ -3,13 +3,15 @@ import * as THREE from 'three'
 import { useGameStore } from '@/store'
 import { supabase } from '@/supabaseClient'
 import { fetchCloudSave } from '@/game/skills'
+import loadingBgUrl from '@/Loading 2.png'
 
 // ============================================================================
-// LoginScreen — full-screen auth with interactive Three.js ember background.
-// Background is mounted only while login is visible and destroyed on exit.
+// LoginScreen — full-screen auth splash matching the reference layout:
+// dark game background, Three.js ember field, top nav, centered title/form,
+// side labels, corner frames, bottom bar. Supabase auth is unchanged.
 // ============================================================================
 
-const EMBER_COUNT = 120
+const EMBER_COUNT = 100
 
 export const LoginScreen = () => {
   const [view, setView] = useState<'login' | 'register'>('login')
@@ -24,9 +26,8 @@ export const LoginScreen = () => {
   const setLevelLoading = useGameStore((s) => s.setLevelLoading)
 
   const canvasContainerRef = useRef<HTMLDivElement>(null)
-  const mouseRef = useRef({ x: 0, y: 0 })
 
-  // Three.js background — ember particles that drift and react to mouse
+  // Three.js background — soft ember particles behind the splash
   useEffect(() => {
     const container = canvasContainerRef.current
     if (!container) return
@@ -40,57 +41,52 @@ export const LoginScreen = () => {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     container.appendChild(renderer.domElement)
 
-    // Ember particles
     const geometry = new THREE.BufferGeometry()
     const positions = new Float32Array(EMBER_COUNT * 3)
     const velocities: { x: number; y: number; z: number }[] = []
 
     for (let i = 0; i < EMBER_COUNT; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 16
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 10
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 8 - 2
+      positions[i * 3] = (Math.random() - 0.5) * 18
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 12
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 10 - 2
       velocities.push({
-        x: (Math.random() - 0.5) * 0.4,
-        y: Math.random() * 0.5 + 0.2,
-        z: (Math.random() - 0.5) * 0.2,
+        x: (Math.random() - 0.5) * 0.3,
+        y: Math.random() * 0.4 + 0.15,
+        z: (Math.random() - 0.5) * 0.15,
       })
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
 
+    const sprite = (() => {
+      const canvas = document.createElement('canvas')
+      canvas.width = 32
+      canvas.height = 32
+      const ctx = canvas.getContext('2d')!
+      const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16)
+      gradient.addColorStop(0, 'rgba(255,255,255,1)')
+      gradient.addColorStop(0.15, 'rgba(255,200,120,0.95)')
+      gradient.addColorStop(0.4, 'rgba(255,100,30,0.5)')
+      gradient.addColorStop(1, 'rgba(0,0,0,0)')
+      ctx.fillStyle = gradient
+      ctx.fillRect(0, 0, 32, 32)
+      const texture = new THREE.CanvasTexture(canvas)
+      texture.needsUpdate = true
+      return texture
+    })()
+
     const material = new THREE.PointsMaterial({
-      size: 0.25,
+      size: 0.28,
       transparent: true,
-      opacity: 0.85,
+      opacity: 0.7,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       sizeAttenuation: true,
-      map: (() => {
-        const canvas = document.createElement('canvas')
-        canvas.width = 32
-        canvas.height = 32
-        const ctx = canvas.getContext('2d')!
-        const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16)
-        gradient.addColorStop(0, 'rgba(255,255,255,1)')
-        gradient.addColorStop(0.2, 'rgba(255,180,100,0.9)')
-        gradient.addColorStop(0.5, 'rgba(255,100,30,0.4)')
-        gradient.addColorStop(1, 'rgba(0,0,0,0)')
-        ctx.fillStyle = gradient
-        ctx.fillRect(0, 0, 32, 32)
-        const texture = new THREE.CanvasTexture(canvas)
-        texture.needsUpdate = true
-        return texture
-      })(),
+      map: sprite,
     })
 
     const points = new THREE.Points(geometry, material)
     scene.add(points)
-
-    const handleMouseMove = (e: MouseEvent) => {
-      mouseRef.current.x = (e.clientX / window.innerWidth) * 2 - 1
-      mouseRef.current.y = -(e.clientY / window.innerHeight) * 2 + 1
-    }
-    window.addEventListener('mousemove', handleMouseMove)
 
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight
@@ -103,32 +99,29 @@ export const LoginScreen = () => {
     const animate = () => {
       animationId = requestAnimationFrame(animate)
       const pos = points.geometry.attributes.position.array as Float32Array
-      const mx = mouseRef.current.x
-      const my = mouseRef.current.y
 
       for (let i = 0; i < EMBER_COUNT; i++) {
         const idx = i * 3
-        pos[idx] += (velocities[i].x + mx * 0.3) * 0.02
-        pos[idx + 1] += velocities[i].y * 0.02
-        pos[idx + 2] += velocities[i].z * 0.02
+        pos[idx] += velocities[i].x * 0.015
+        pos[idx + 1] += velocities[i].y * 0.015
+        pos[idx + 2] += velocities[i].z * 0.015
 
-        // Wrap around
-        if (pos[idx + 1] > 6) pos[idx + 1] = -6
-        if (Math.abs(pos[idx]) > 9) pos[idx] *= -0.9
+        if (pos[idx + 1] > 7) pos[idx + 1] = -7
+        if (Math.abs(pos[idx]) > 10) pos[idx] *= -0.9
       }
 
       points.geometry.attributes.position.needsUpdate = true
-      points.rotation.y += 0.001
+      points.rotation.y += 0.0008
       renderer.render(scene, camera)
     }
     animate()
 
     return () => {
       cancelAnimationFrame(animationId)
-      window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('resize', handleResize)
       geometry.dispose()
       material.dispose()
+      sprite.dispose()
       renderer.dispose()
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement)
@@ -138,13 +131,15 @@ export const LoginScreen = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    })
+    setLoading(true)
+    setErrorMsg('')
+    setLevelLoading(true)
+
+    const { data, error } = await supabase.auth.signUp({ email, password })
     if (error) {
       setErrorMsg(error.message)
       setLevelLoading(false)
+      setLoading(false)
       return
     }
     if (data.user) {
@@ -156,17 +151,20 @@ export const LoginScreen = () => {
     }
     setErrorMsg('Failed to create account. Please try again.')
     setLevelLoading(false)
+    setLoading(false)
   }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    setLoading(true)
+    setErrorMsg('')
+    setLevelLoading(true)
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
       setErrorMsg(error.message)
       setLevelLoading(false)
+      setLoading(false)
       return
     }
     if (data.user) {
@@ -178,6 +176,7 @@ export const LoginScreen = () => {
     }
     setErrorMsg('Login failed. Please try again.')
     setLevelLoading(false)
+    setLoading(false)
   }
 
   const handleGuest = () => {
@@ -187,133 +186,151 @@ export const LoginScreen = () => {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Three.js ember background */}
-      <div ref={canvasContainerRef} className="absolute inset-0 z-0" />
+    <div className="fixed inset-0 z-50 overflow-hidden">
+      {/* Background layers */}
+      <div
+        className="absolute inset-0 z-0 bg-cover bg-center"
+        style={{ backgroundImage: `url("${loadingBgUrl}")` }}
+      />
+      <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/70 via-[#0d122b]/80 to-black/80" />
 
-      {/* Dark overlay */}
-      <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+      {/* Three.js ember canvas */}
+      <div ref={canvasContainerRef} className="absolute inset-0 z-0 pointer-events-none" />
 
-      {/* Login card */}
-      <div className="relative z-10 w-full max-w-md mx-4">
-        <div className="rounded-2xl shadow-2xl shadow-black/60 border border-stone-border/50 bg-stone/90 backdrop-blur-xl p-8 md:p-10">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="font-display text-4xl md:text-5xl font-bold text-parchment tracking-wider mb-2">
-              NIGHTSHADE
-            </h1>
-            <p className="text-sm text-ash/80 tracking-wide">
-              {view === 'login' ? 'Welcome back, adventurer' : 'Begin your journey'}
-            </p>
-          </div>
+      {/* Corner frames */}
+      <div className="frame-tl" />
+      <div className="frame-br" />
 
-          {/* Form */}
-          {view === 'login' ? (
-            <form onSubmit={handleLogin} className="space-y-5">
-              <div>
-                <input
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  type="email"
-                  placeholder="Email"
-                  required
-                  autoComplete="email"
-                  className="w-full bg-stone-input border border-stone-border rounded-lg py-3 px-4 text-parchment placeholder-ash/50 outline-none transition-all focus:border-spell/60 focus:ring-1 focus:ring-spell/30"
-                />
-              </div>
-              <div>
-                <input
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  type="password"
-                  placeholder="Password"
-                  required
-                  minLength={6}
-                  autoComplete="current-password"
-                  className="w-full bg-stone-input border border-stone-border rounded-lg py-3 px-4 text-parchment placeholder-ash/50 outline-none transition-all focus:border-spell/60 focus:ring-1 focus:ring-spell/30"
-                />
-              </div>
-              {errorMsg && (
-                <div className="p-3 bg-red-900/30 border border-red-500/50 rounded-lg text-center text-sm text-red-300">
-                  {errorMsg}
-                </div>
-              )}
-              <button
-                disabled={loading}
-                type="submit"
-                className="w-full bg-spell text-void font-bold py-3.5 rounded-lg hover:bg-spell/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-base tracking-wide"
-              >
-                {loading ? 'Entering...' : 'Enter Dungeon'}
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleRegister} className="space-y-5">
-              <div>
-                <input
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  type="email"
-                  placeholder="Email"
-                  required
-                  autoComplete="email"
-                  className="w-full bg-stone-input border border-stone-border rounded-lg py-3 px-4 text-parchment placeholder-ash/50 outline-none transition-all focus:border-spell/60 focus:ring-1 focus:ring-spell/30"
-                />
-              </div>
-              <div>
-                <input
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  type="password"
-                  placeholder="Password"
-                  required
-                  minLength={6}
-                  autoComplete="new-password"
-                  className="w-full bg-stone-input border border-stone-border rounded-lg py-3 px-4 text-parchment placeholder-ash/50 outline-none transition-all focus:border-spell/60 focus:ring-1 focus:ring-spell/30"
-                />
-              </div>
-              {errorMsg && (
-                <div className="p-3 bg-red-900/30 border border-red-500/50 rounded-lg text-center text-sm text-red-300">
-                  {errorMsg}
-                </div>
-              )}
-              <button
-                disabled={loading}
-                type="submit"
-                className="w-full bg-spell text-void font-bold py-3.5 rounded-lg hover:bg-spell/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-base tracking-wide"
-              >
-                {loading ? 'Creating...' : 'Create Account'}
-              </button>
-            </form>
-          )}
-
-          {/* Toggle between login/register */}
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => { setView(view === 'login' ? 'register' : 'login'); setErrorMsg(''); }}
-              className="text-sm text-ash hover:text-spell transition-colors underline underline-offset-4 decoration-stone-border hover:decoration-spell/50"
-            >
-              {view === 'login' ? "Don't have an account? Create one" : 'Already have an account? Log in'}
-            </button>
-          </div>
-
-          {/* Divider */}
-          <div className="flex items-center my-6">
-            <hr className="flex-1 border-stone-border/50" />
-            <span className="px-4 text-xs text-ash/60 uppercase tracking-widest">or</span>
-            <hr className="flex-1 border-stone-border/50" />
-          </div>
-
-          {/* Guest button */}
-          <button
-            onClick={handleGuest}
-            type="button"
-            className="w-full text-center text-sm font-semibold text-ash hover:text-parchment border border-stone-border/50 hover:border-ember/40 rounded-lg py-3 transition-all hover:bg-white/5"
-          >
-            Continue without an account
+      {/* Top bar */}
+      <nav className="top-bar">
+        <div className="logo">
+          <span className="logo-dot" />
+          NIGHTSHADE
+        </div>
+        <div className="nav-links">
+          <button onClick={() => { setView('register'); setErrorMsg(''); }} className="nav-link">
+            CREATE AN ACCOUNT
           </button>
-          <p className="text-xs text-ash/50 text-center mt-3 leading-relaxed">
-            Guest progress stays on this device only. It won't sync to mobile, and it may be lost if you clear your browser data.
-          </p>
+          <button onClick={() => { setView('login'); setErrorMsg(''); }} className="nav-link">
+            LOGIN
+          </button>
+          <button onClick={handleGuest} className="nav-link">
+            PLAY WITHOUT ACCOUNT
+          </button>
+        </div>
+      </nav>
+
+      {/* Side labels */}
+      <div className="side-label-left">
+        <span className="side-num">N&ordm; 666</span>
+      </div>
+      <div className="side-label-right">
+        <span>Guest progress stays on</span>
+        <span>this device only</span>
+      </div>
+
+      {/* Horizontal rule */}
+      <div className="h-rule" />
+
+      {/* Center content */}
+      <div className="title-block">
+        <h1 className="title-text">NIGHTSHADE</h1>
+        <div className="title-divider" />
+        <p className="title-tagline">
+          {view === 'login'
+            ? 'Sign in to continue your descent'
+            : 'Create an account to begin your journey'}
+        </p>
+      </div>
+
+      {/* Form card */}
+      <div className="form-card">
+        {view === 'login' ? (
+          <form onSubmit={handleLogin} className="space-y-4">
+            <input
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              type="email"
+              placeholder="Email"
+              required
+              autoComplete="email"
+              className="input-field"
+            />
+            <input
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              type="password"
+              placeholder="Password"
+              required
+              minLength={6}
+              autoComplete="current-password"
+              className="input-field"
+            />
+            {errorMsg && (
+              <div className="error-box">{errorMsg}</div>
+            )}
+            <button
+              disabled={loading}
+              type="submit"
+              className="btn-primary"
+            >
+              {loading ? 'Entering...' : 'Enter Dungeon'}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleRegister} className="space-y-4">
+            <input
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              type="email"
+              placeholder="Email"
+              required
+              autoComplete="email"
+              className="input-field"
+            />
+            <input
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              type="password"
+              placeholder="Password"
+              required
+              minLength={6}
+              autoComplete="new-password"
+              className="input-field"
+            />
+            {errorMsg && (
+              <div className="error-box">{errorMsg}</div>
+            )}
+            <button
+              disabled={loading}
+              type="submit"
+              className="btn-primary"
+            >
+              {loading ? 'Creating...' : 'Create Account'}
+            </button>
+          </form>
+        )}
+
+        <div className="form-footer">
+          <button
+            onClick={() => { setView(view === 'login' ? 'register' : 'login'); setErrorMsg(''); }}
+            className="text-link"
+          >
+            {view === 'login'
+              ? "Don't have an account? Create one"
+              : 'Already have an account? Log in'}
+          </button>
+        </div>
+      </div>
+
+      {/* Bottom bar */}
+      <div className="bottom-bar">
+        <div className="bottom-left">
+          Caps Wars — Remixed
+        </div>
+        <div className="bottom-center" />
+        <div className="bottom-right">
+          Tip: Use landscape on mobile
         </div>
       </div>
     </div>
