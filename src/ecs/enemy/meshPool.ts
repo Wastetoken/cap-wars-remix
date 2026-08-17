@@ -27,9 +27,12 @@ export const acquireClone = (mobType: MobType, sourceScene: THREE.Object3D): THR
   if (pool.length > 0) {
     const clone = pool.pop()!
     resetClone(clone)
+    clone.visible = true
     return clone
   }
-  return cloneRigged(sourceScene)
+  const fresh = cloneRigged(sourceScene)
+  fresh.visible = true
+  return fresh
 }
 
 export const releaseClone = (mobType: MobType, clone: THREE.Object3D) => {
