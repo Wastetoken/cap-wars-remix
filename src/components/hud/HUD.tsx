@@ -48,6 +48,7 @@ export const HUD = () => {
 
   const inRun = gamePhase === 'playing' || gamePhase === 'paused'
   const overlayOpen = skillTreeOpen || settingsOpen || loadoutOpen
+  const isLevelLoading = useGameStore((s) => s.isLevelLoading)
 
   return (
     <div className={`hud ${touchMode ? 'touch-mode' : ''}`}>
@@ -56,7 +57,7 @@ export const HUD = () => {
       <Announcements />
       <DamageFlash />
 
-      {gamePhase === 'login' && !overlayOpen && <LoginScreen />}
+      {gamePhase === 'login' && !isLevelLoading && !overlayOpen && <LoginScreen />}
       {gamePhase === 'menu' && !overlayOpen && <MainMenu />}
       {gamePhase === 'paused' && !overlayOpen && !playerDead && !gameWon && <PauseMenu />}
       {settingsOpen && <SettingsMenu />}
@@ -245,6 +246,7 @@ const MainMenu = () => {
   const startGame = useGameStore((s) => s.startGame)
   const setSkillTreeOpen = useGameStore((s) => s.setSkillTreeOpen)
   const setSettingsOpen = useGameStore((s) => s.setSettingsOpen)
+  const setLevelLoading = useGameStore((s) => s.setLevelLoading)
   const selectedCharacter = useGameStore((s) => s.selectedCharacter)
   // Per-character progression for the status bar
   const souls = useGameStore((s) => s.characterSouls[s.selectedCharacter] ?? 0)
@@ -254,6 +256,12 @@ const MainMenu = () => {
   // half-rendered scene or placeholder junk on screen at startup
   const { progress } = useProgress()
   const sceneReady = progress >= 100
+
+  useEffect(() => {
+    if (sceneReady) {
+      setLevelLoading(false)
+    }
+  }, [sceneReady, setLevelLoading])
 
   const heroLevel = levelForSouls(souls)
   const maxHp = CHARACTERS[selectedCharacter].baseHealth + maxHealthBonus(skills)
