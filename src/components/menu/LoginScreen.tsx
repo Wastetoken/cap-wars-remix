@@ -119,22 +119,23 @@ export const LoginScreen = () => {
         <span>this device only</span>
       </div>
 
-      {/* Horizontal rule */}
-      <div className="h-rule" />
+      {/* Centered scrollable login body */}
+      <div className="login-body">
+        <div className="h-rule" />
 
-      {/* Center title */}
-      <div className="title-block">
-        <h1 className="title-text">CAPS WARS</h1>
-        <div className="title-divider" />
-        <p className="title-tagline">
-          {view === 'login'
-            ? 'Sign in to continue your descent'
-            : 'Create an account to begin your journey'}
-        </p>
-      </div>
+        {/* Center title */}
+        <div className="title-block">
+          <h1 className="title-text">CAPS WARS</h1>
+          <div className="title-divider" />
+          <p className="title-tagline">
+            {view === 'login'
+              ? 'Sign in to continue your descent'
+              : 'Create an account to begin your journey'}
+          </p>
+        </div>
 
-      {/* Form card */}
-      <div className="form-card">
+        {/* Form card */}
+        <div className="form-card">
         {view === 'login' ? (
           <form onSubmit={handleLogin} className="space-y-4">
             <input
@@ -211,6 +212,7 @@ export const LoginScreen = () => {
               : 'Already have an account? Log in'}
           </button>
         </div>
+      </div>
       </div>
 
       {/* Bottom bar */}
