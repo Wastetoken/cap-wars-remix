@@ -70,6 +70,7 @@ const KNIGHT_HIDE = [
 ]
 
 const BARBARIAN_HIDE = [
+  '2H_Axe',
   '1H_Axe',
   '1H_Axe_Offhand',
   'Barbarian_Round_Shield',
@@ -133,7 +134,7 @@ export const CHARACTERS: Record<CharacterId, CharacterDef> = {
     baseHealth: 140,
     speed: 0.85,
     damageMult: 1.35,
-    weapon: '2H_Axe',
+    weapon: '2H_Sword',
     hide: BARBARIAN_HIDE,
     mobility: {
       name: 'Leap',
