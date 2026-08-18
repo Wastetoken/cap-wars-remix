@@ -2707,3 +2707,151 @@ canvas {
   .logo { font-size: 11px; }
 }
 
+/* ==========================================================================
+   Erosion background — WebGPU particle effect
+   ========================================================================== */
+
+.erosion-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+  background: #050505;
+  cursor: crosshair;
+}
+
+.erosion-content {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.erosion-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.erosion-rings {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  pointer-events: none;
+}
+
+.erosion-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  opacity: 0.5;
+  image-rendering: pixelated;
+}
+
+.erosion-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.erosion-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0 2rem;
+  text-align: center;
+}
+
+.erosion-title {
+  font-weight: 200;
+  letter-spacing: -0.06em;
+  line-height: 0.85;
+  font-size: clamp(3rem, 10vw, 8rem);
+  margin: 0;
+  overflow: hidden;
+  perspective: 800px;
+  color: #fff;
+}
+
+.erosion-sub {
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  font-size: clamp(0.875rem, 1.5vw, 1.125rem);
+  max-width: 480px;
+  margin: 0;
+  overflow: hidden;
+  perspective: 800px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.erosion-char {
+  display: inline-block;
+  opacity: 0;
+  transform-origin: center bottom;
+}
+
+.erosion-footer {
+  margin-top: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  opacity: 0;
+}
+
+.erosion-footer-line {
+  height: 1px;
+  width: 2.5rem;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.erosion-footer-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+#erosion-fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+  background: #0a0a0a;
+  color: #ddd;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+#erosion-fallback .box {
+  max-width: 480px;
+}
+
+#erosion-fallback h2 {
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.75rem;
+}
+
+/* Ensure login UI sits above erosion canvases */
+.login-splash .erosion-container {
+  z-index: 0;
+}
+
+.login-splash .login-splash > *:not(.erosion-container) {
+  position: relative;
+  z-index: 2;
+}
+

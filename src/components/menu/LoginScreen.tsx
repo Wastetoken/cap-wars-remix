@@ -3,6 +3,7 @@ import { useGameStore } from '@/store'
 import { supabase } from '@/supabaseClient'
 import { fetchCloudSave } from '@/game/skills'
 import loadingBgUrl from '@/Loading 2.png'
+import { ErosionBackground } from '@/components/effects/ErosionBackground'
 
 // ============================================================================
 // LoginScreen — full-screen auth splash matching the reference layout:
@@ -80,12 +81,11 @@ export const LoginScreen = () => {
 
   return (
     <div className="login-splash">
-      {/* Background layers */}
-      <div
-        className="absolute inset-0 z-0 bg-cover bg-center"
-        style={{ backgroundImage: `url("${loadingBgUrl}")` }}
-      />
-      <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/70 via-[#0d122b]/80 to-black/80" />
+      {/* Background: erosion particle effect */}
+      <ErosionBackground theme="ember" />
+
+      {/* Gradient overlay for readability */}
+      <div className="absolute inset-0 z-[1] bg-gradient-to-b from-black/50 via-black/20 to-black/70" />
 
       {/* Corner frames */}
       <div className="frame-tl" />
