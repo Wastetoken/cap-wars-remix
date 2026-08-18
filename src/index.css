@@ -2357,7 +2357,7 @@ canvas {
 }
 
 /* ==========================================================================
-   Login splash — full-bleed reference layout
+   Login splash — mobile-first auth screen
    ========================================================================== */
 
 @font-face {
@@ -2386,20 +2386,19 @@ canvas {
   pointer-events: none;
 }
 
-/* Title */
+/* Title — mobile first: stacked, centered, compact */
 .title-block {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  position: relative;
   text-align: center;
   z-index: 2;
+  margin: 0 auto;
+  padding: 0 1.25rem;
   animation: loginFadeIn 1s ease-out 0.3s both;
 }
 
 .title-text {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: clamp(48px, 12vw, 160px);
+  font-size: clamp(42px, 11vw, 160px);
   font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 0.9;
@@ -2411,7 +2410,7 @@ canvas {
   width: 40px;
   height: 1px;
   background: rgba(255, 255, 255, 0.6);
-  margin: 18px auto;
+  margin: 1rem auto;
 }
 
 .title-tagline {
@@ -2422,16 +2421,18 @@ canvas {
   color: rgba(255, 255, 255, 0.55);
 }
 
-/* Top bar */
+/* Top bar — mobile first: compact, stacked */
 .top-bar {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: 28px 44px;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
   z-index: 3;
   animation: loginFadeIn 0.8s ease-out 0.5s both;
 }
@@ -2458,7 +2459,9 @@ canvas {
 
 .nav-links {
   display: flex;
-  gap: 28px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem 1.25rem;
 }
 
 .nav-link {
@@ -2479,58 +2482,27 @@ canvas {
   color: #fff;
 }
 
-/* Side labels */
+/* Side labels — hidden on mobile, shown on desktop */
 .side-label-left {
-  position: absolute;
-  left: 44px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 2;
-  animation: loginFadeIn 0.8s ease-out 0.6s both;
-}
-
-.side-num {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.3em;
-  color: rgba(255, 255, 255, 0.45);
-  writing-mode: vertical-lr;
+  display: none;
 }
 
 .side-label-right {
-  position: absolute;
-  right: 44px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 5px;
-  animation: loginFadeIn 0.8s ease-out 0.6s both;
+  display: none;
 }
 
-.side-label-right span {
-  font-size: 9px;
-  font-weight: 400;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
-  text-align: right;
-  line-height: 1.4;
-}
-
-/* Bottom bar */
+/* Bottom bar — mobile first: stacked, compact */
 .bottom-bar {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  padding: 28px 44px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 1rem 1.25rem;
   z-index: 2;
   animation: loginFadeIn 0.8s ease-out 0.7s both;
 }
@@ -2543,15 +2515,16 @@ canvas {
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.4);
+  text-align: center;
 }
 
-/* Corner frames */
+/* Corner frames — smaller on mobile */
 .frame-tl {
   position: absolute;
-  top: 22px;
-  left: 30px;
-  width: 36px;
-  height: 36px;
+  top: 0.75rem;
+  left: 0.75rem;
+  width: 1.5rem;
+  height: 1.5rem;
   border-top: 1px solid rgba(255, 255, 255, 0.25);
   border-left: 1px solid rgba(255, 255, 255, 0.25);
   z-index: 2;
@@ -2561,10 +2534,10 @@ canvas {
 
 .frame-br {
   position: absolute;
-  bottom: 22px;
-  right: 30px;
-  width: 36px;
-  height: 36px;
+  bottom: 0.75rem;
+  right: 0.75rem;
+  width: 1.5rem;
+  height: 1.5rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.25);
   border-right: 1px solid rgba(255, 255, 255, 0.25);
   z-index: 2;
@@ -2572,12 +2545,12 @@ canvas {
   animation: loginFadeIn 0.8s ease-out 0.4s both;
 }
 
-/* Horizontal rule */
+/* Horizontal rule — tighter on mobile */
 .h-rule {
   position: absolute;
-  bottom: 90px;
-  left: 44px;
-  right: 44px;
+  bottom: 4.5rem;
+  left: 1.25rem;
+  right: 1.25rem;
   height: 1px;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.35) 0%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.35) 100%);
   z-index: 2;
@@ -2585,16 +2558,14 @@ canvas {
   opacity: 0.6;
 }
 
-/* Form card */
+/* Form card — mobile first: sits below title naturally, no absolute centering */
 .form-card {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  position: relative;
   z-index: 3;
   width: 100%;
   max-width: 380px;
-  margin-top: 180px;
+  margin: 1.5rem auto 0;
+  padding: 0 1.25rem;
   animation: loginFadeIn 0.8s ease-out 0.8s both;
 }
 
@@ -2603,10 +2574,10 @@ canvas {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 6px;
-  padding: 12px 16px;
+  padding: 0.875rem 1rem;
   color: #fff;
   font-family: 'Inter', sans-serif;
-  font-size: 13px;
+  font-size: 16px;
   outline: none;
   transition: border-color 0.3s, background 0.3s;
 }
@@ -2625,7 +2596,7 @@ canvas {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
-  padding: 12px;
+  padding: 0.875rem;
   color: #fff;
   font-family: 'Space Grotesk', sans-serif;
   font-size: 12px;
@@ -2647,7 +2618,7 @@ canvas {
 }
 
 .form-footer {
-  margin-top: 20px;
+  margin-top: 1.25rem;
   text-align: center;
 }
 
@@ -2673,7 +2644,7 @@ canvas {
 }
 
 .error-box {
-  padding: 10px 14px;
+  padding: 0.75rem 0.875rem;
   background: rgba(220, 38, 38, 0.15);
   border: 1px solid rgba(220, 38, 38, 0.35);
   border-radius: 6px;
@@ -2688,23 +2659,138 @@ canvas {
   to { opacity: 1; }
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .top-bar { padding: 20px 22px; }
-  .bottom-bar { padding: 20px 22px; }
-  .side-label-left,
-  .side-label-right { display: none; }
-  .nav-links { gap: 16px; }
-  .frame-tl { left: 14px; top: 14px; }
-  .frame-br { right: 14px; bottom: 14px; }
-  .h-rule { left: 22px; right: 22px; bottom: 80px; }
-  .form-card { margin-top: 140px; }
+/* ==========================================================================
+   Login splash — desktop enhancements (mobile-first breakpoints)
+   ========================================================================== */
+
+@media (min-width: 768px) {
+  .top-bar {
+    flex-direction: row;
+    padding: 1.75rem 2.75rem;
+  }
+
+  .nav-links {
+    gap: 1.75rem;
+  }
+
+  .side-label-left {
+    display: block;
+    position: absolute;
+    left: 2.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    animation: loginFadeIn 0.8s ease-out 0.6s both;
+  }
+
+  .side-label-right {
+    display: flex;
+    position: absolute;
+    right: 2.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.35rem;
+    animation: loginFadeIn 0.8s ease-out 0.6s both;
+  }
+
+  .side-label-right span {
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: right;
+    line-height: 1.4;
+  }
+
+  .bottom-bar {
+    flex-direction: row;
+    padding: 1.75rem 2.75rem;
+  }
+
+  .frame-tl {
+    top: 1.25rem;
+    left: 1.75rem;
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .frame-br {
+    bottom: 1.25rem;
+    right: 1.75rem;
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .h-rule {
+    bottom: 5.5rem;
+    left: 2.75rem;
+    right: 2.75rem;
+  }
+
+  .form-card {
+    margin-top: 1.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .top-bar {
+    padding: 2rem 3.5rem;
+  }
+
+  .side-label-left {
+    left: 3.5rem;
+  }
+
+  .side-label-right {
+    right: 3.5rem;
+  }
+
+  .bottom-bar {
+    padding: 2rem 3.5rem;
+  }
+
+  .frame-tl {
+    top: 1.5rem;
+    left: 2.25rem;
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .frame-br {
+    bottom: 1.5rem;
+    right: 2.25rem;
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .h-rule {
+    bottom: 6rem;
+    left: 3.5rem;
+    right: 3.5rem;
+  }
+
+  .form-card {
+    margin-top: 2rem;
+  }
 }
 
 @media (max-width: 480px) {
-  .nav-links { gap: 12px; }
-  .nav-link { font-size: 9px; letter-spacing: 0.15em; }
-  .logo { font-size: 11px; }
+  .nav-links {
+    gap: 0.6rem 1rem;
+  }
+
+  .nav-link {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+  }
+
+  .logo {
+    font-size: 11px;
+  }
 }
 
 /* ==========================================================================
