@@ -82,7 +82,7 @@ export const LoginScreen = () => {
   return (
     <div className="login-splash">
       {/* Background: erosion particle effect */}
-      <ErosionBackground theme="ember" />
+      <ErosionBackground theme="ember" fallbackImage={loadingBgUrl} />
 
       {/* Gradient overlay for readability */}
       <div className="absolute inset-0 z-[1] bg-gradient-to-b from-black/50 via-black/20 to-black/70" />

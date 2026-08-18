@@ -710,7 +710,7 @@ class Erosion {
  * React component
  * ──────────────────────────────────────────────────────────── */
 
-export const ErosionBackground = ({ theme = 'ember' }: { theme?: string }) => {
+export const ErosionBackground = ({ theme = 'ember', fallbackImage }: { theme?: string; fallbackImage?: string }) => {
   const rootRef = useRef<HTMLDivElement>(null)
   const instanceRef = useRef<Erosion | null>(null)
   const [webGpuAvailable, setWebGpuAvailable] = useState(true)
@@ -786,20 +786,22 @@ export const ErosionBackground = ({ theme = 'ember' }: { theme?: string }) => {
             justifyContent: 'center',
             textAlign: 'center',
             padding: '2rem',
-            background: '#0a0a0a',
+            background: fallbackImage ? `url(${fallbackImage}) center/cover no-repeat` : '#0a0a0a',
             color: '#ddd',
             fontSize: 15,
             lineHeight: 1.6,
           }}
         >
-          <div>
-            <h2 style={{ fontWeight: 300, letterSpacing: '-0.02em', marginBottom: '0.75rem' }}>
-              WebGPU isn't available here
-            </h2>
-            <p>
-              This needs a WebGPU-capable browser — current Chrome, Edge, or Safari Technology Preview.
-            </p>
-          </div>
+          {!fallbackImage && (
+            <div>
+              <h2 style={{ fontWeight: 300, letterSpacing: '-0.02em', marginBottom: '0.75rem' }}>
+                WebGPU isn't available here
+              </h2>
+              <p>
+                This needs a WebGPU-capable browser — current Chrome, Edge, or Safari Technology Preview.
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>
