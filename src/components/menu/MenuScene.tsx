@@ -2,11 +2,13 @@ import { useEffect, useMemo, useRef, useState, Suspense } from 'react'
 import * as THREE from 'three'
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { useGLTF, Html } from '@react-three/drei'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import { useGameStore } from '@/store'
 import { CHARACTERS, CHARACTER_LIST, type CharacterId } from '@/game/characters'
 import { levelForSouls } from '@/game/progression'
 import { cloneRigged } from '@/game/cloneRigged'
+import { computeGearVisual } from '@/game/gear'
 import mainMenuUrl from '@/main-menu.glb?url'
 
 // ============================================================================
@@ -149,8 +151,61 @@ const MenuHero = ({ id }: { id: CharacterId }) => {
   const mixer = useMemo(() => new THREE.AnimationMixer(clone), [clone])
   const group = useRef<THREE.Group>(null)
   const ring = useRef<THREE.Mesh>(null)
+  const externalWeaponGroup = useRef<THREE.Group>(null)
   const [hovered, setHovered] = useState(false)
   const isSelected = selectedCharacter === id
+
+  useEffect(() => {
+    const visual = computeGearVisual(id, [], charDef.weapon)
+    const weaponPath = visual.externalWeapon
+    const targetBoneName = visual.weaponNode || charDef.weapon
+    const groupRef = externalWeaponGroup.current
+    if (!groupRef) return
+    groupRef.clear()
+
+    if (!weaponPath) return
+
+    const loader = new GLTFLoader()
+    loader.load(
+      weaponPath,
+      (gltf) => {
+        const weaponScene = gltf.scene.clone(true)
+        clone.updateWorldMatrix(true, false)
+
+        const bones = new Map<string, THREE.Bone>()
+        clone.traverse((obj) => {
+          if (obj.isBone) bones.set(obj.name, obj)
+        })
+
+        const targetBone = bones.get(targetBoneName)
+        if (targetBone) {
+          weaponScene.traverse((child) => {
+            if (child.isMesh) {
+              child.material = Array.isArray(child.material)
+                ? child.material.map((m) => m.clone())
+                : child.material.clone()
+              child.position.set(0, 0, 0)
+              child.rotation.set(0, 0, 0)
+              child.scale.set(1, 1, 1)
+              child.updateMatrix()
+              targetBone.add(child)
+            }
+          })
+        } else {
+          console.warn(`[MenuHero] Bone "${targetBoneName}" not found, adding to group`)
+          groupRef.add(weaponScene)
+        }
+      },
+      undefined,
+      (err) => {
+        console.error('Failed to load menu external weapon:', weaponPath, err)
+      }
+    )
+
+    return () => {
+      groupRef.clear()
+    }
+  }, [clone, id, charDef.weapon])
 
   useEffect(() => {
     ;((window as unknown as { __heroes?: Record<string, THREE.Object3D> }).__heroes ??= {})[id] = clone
@@ -197,6 +252,7 @@ const MenuHero = ({ id }: { id: CharacterId }) => {
     <group position={stage.pos} rotation-y={stage.rotY}>
       <group ref={group} scale={charDef.scale * HERO_SCALE}>
         <primitive object={clone} />
+        <group ref={externalWeaponGroup} />
       </group>
       {/* Click target: a tight invisible cylinder over the hero. */}
       <mesh
