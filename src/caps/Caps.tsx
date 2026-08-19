@@ -207,6 +207,7 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
     applyInGameGear(
       clone,
       selectedCharacter,
+      charDef,
       gear,
       charDef.weapon,
       externalWeaponGroup.current

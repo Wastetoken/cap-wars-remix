@@ -39,7 +39,7 @@ export const CharacterPreview = ({ spin = true }: { spin?: boolean }) => {
   // Base hides + gear visuals — uses the shared pipeline so menu, game,
   // and preview all match.
   useEffect(() => {
-    applyPreviewGear(clone, selectedCharacter, gear, charDef.weapon)
+    applyPreviewGear(clone, selectedCharacter, charDef, gear, charDef.weapon)
   }, [clone, selectedCharacter, gear, charDef.weapon])
 
   useFrame((state, delta) => {

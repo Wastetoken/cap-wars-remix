@@ -143,7 +143,7 @@ const MenuHero = ({ id }: { id: CharacterId }) => {
   const isSelected = selectedCharacter === id
 
   useEffect(() => {
-    applyMenuHeroGear(clone, id, charDef.weapon, externalWeaponGroup.current)
+    applyMenuHeroGear(clone, id, charDef, charDef.weapon, externalWeaponGroup.current)
   }, [clone, id, charDef.weapon])
 
   useEffect(() => {

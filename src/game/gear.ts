@@ -151,7 +151,7 @@ export const gearDashCdMult = (gear: GearPiece[]) =>
 export const gearHpFlat = (gear: GearPiece[]) => gear.reduce((s, g) => s + g.hpFlat, 0)
 
 /** Total crit chance as a fraction — diminishing returns: each trinket's
- *  crit% is a separate independent roll (1 − ∏(1 − p)), so stacking always
+ *  crit% is a separate independent roll (1 − ∝(1 − p)), so stacking always
  *  helps but there's no hard cap wall to hit */
 export const gearCritChance = (gear: GearPiece[]) =>
   1 - gear.reduce((m, g) => m * (1 - g.critPct / 100), 1)
@@ -495,7 +495,7 @@ export const applyGearVisuals = (
  * Base hide lists � applied on clone before gear visuals
  * ============================================================================ */
 
-const applyBaseHides = (clone: THREE.Object3D, charDef: CharacterDef) => {
+const applyBaseHides = (clone: THREE.Object3D, charDef: { hide: string[]; weapon: string }) => {
   clone.traverse((obj) => {
     if (charDef.hide.includes(obj.name)) {
       obj.visible = false
@@ -515,11 +515,11 @@ const applyBaseHides = (clone: THREE.Object3D, charDef: CharacterDef) => {
 export const applyMenuHeroGear = (
   clone: THREE.Object3D,
   characterId: string,
+  charDef: { hide: string[]; weapon: string },
   baseWeapon: string,
   externalWeaponGroup: THREE.Group | null,
   onExternalWeaponLoaded?: (scene: THREE.Object3D, bone: THREE.Bone | null) => void
 ) => {
-  const charDef = CHARACTERS[characterId]
   applyBaseHides(clone, charDef)
   const visual = computeGearVisual(characterId, [], baseWeapon)
   applyGearVisuals(clone, visual, baseWeapon, {
@@ -531,12 +531,12 @@ export const applyMenuHeroGear = (
 export const applyInGameGear = (
   clone: THREE.Object3D,
   characterId: string,
+  charDef: { hide: string[]; weapon: string },
   gear: GearPiece[],
   baseWeapon: string,
   externalWeaponGroup: THREE.Group | null,
   onExternalWeaponLoaded?: (scene: THREE.Object3D, bone: THREE.Bone | null) => void
 ) => {
-  const charDef = CHARACTERS[characterId]
   applyBaseHides(clone, charDef)
   const visual = computeGearVisual(characterId, gear, baseWeapon)
   applyGearVisuals(clone, visual, baseWeapon, {
@@ -548,10 +548,10 @@ export const applyInGameGear = (
 export const applyPreviewGear = (
   clone: THREE.Object3D,
   characterId: string,
+  charDef: { hide: string[]; weapon: string },
   gear: GearPiece[],
   baseWeapon: string
 ) => {
-  const charDef = CHARACTERS[characterId]
   applyBaseHides(clone, charDef)
   const visual = computeGearVisual(characterId, gear, baseWeapon)
   applyGearVisuals(clone, visual, baseWeapon, {})
