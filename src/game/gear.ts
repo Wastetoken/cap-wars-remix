@@ -209,10 +209,10 @@ export const WEAPON_ATTACHMENTS: Record<
     legendary: { show: ['1H_Sword'], hide: ['1H_Sword_Offhand'], node: '1H_Sword', external: '/items/1h-sword-upgrade-cs.glb' },
   },
   barbarian: {
-    common: { show: ['2H_Sword'], hide: [], node: '2H_Sword' },
-    rare: { show: ['2H_Sword', '1H_Axe_Offhand'], hide: [], node: '2H_Sword' },
-    epic: { show: ['2H_Sword', '1H_Axe_Offhand'], hide: [], node: '2H_Sword', external: '/items/2h-axe-upgrade-cv.glb' },
-    legendary: { show: ['2H_Sword', '1H_Axe_Offhand'], hide: [], node: '2H_Sword', external: '/items/2h-axe-upgrade-cs.glb' },
+    common: { show: [], hide: ['2H_Axe'], node: '2H_Axe', external: '/items/2h-sword-legendary-cv.glb' },
+    rare: { show: ['1H_Axe_Offhand'], hide: ['2H_Axe'], node: '2H_Axe', external: '/items/2h-sword-legendary-cv.glb' },
+    epic: { show: ['1H_Axe_Offhand'], hide: ['2H_Axe'], node: '2H_Axe', external: '/items/2h-sword-legendary-cs.glb' },
+    legendary: { show: ['1H_Axe_Offhand'], hide: ['2H_Axe'], node: '2H_Axe', external: '/items/2h-sword-legendary-cs.glb' },
   },
   mage: {
     common: { show: ['2H_Staff'], hide: [], node: '2H_Staff' },
@@ -318,6 +318,7 @@ export const GEAR_ATTACHMENT_NAMES = [
   '1H_Sword',
   '1H_Sword_Offhand',
   '2H_Sword',
+  '2H_Axe',
   '1H_Axe_Offhand',
   'Spellbook',
   'Spellbook_open',
