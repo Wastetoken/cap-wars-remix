@@ -352,6 +352,9 @@ export const computeGearVisual = (
     }
     // A weapon piece always at least tints the aura on the base weapon
     if (!weaponNode) weaponNode = baseWeapon
+  } else if (characterId === 'barbarian') {
+    weaponNode = '2H_Axe'
+    externalWeapon = '/items/2h-sword-legendary-cv.glb'
   }
 
   const armor = bestInSlot(gear, 'armor')
