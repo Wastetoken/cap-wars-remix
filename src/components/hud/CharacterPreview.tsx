@@ -5,7 +5,7 @@ import { useGLTF } from '@react-three/drei'
 import { cloneRigged } from '@/game/cloneRigged'
 import { useGameStore } from '@/store'
 import { CHARACTERS } from '@/game/characters'
-import { computeGearVisual, GEAR_ATTACHMENT_NAMES } from '@/game/gear'
+import { applyPreviewGear } from '@/game/gear'
 
 // ============================================================================
 // CharacterPreview — live 3D character used by the menu character select and
@@ -36,28 +36,11 @@ export const CharacterPreview = ({ spin = true }: { spin?: boolean }) => {
     }
   }, [mixer, animations, charDef.anims.stance])
 
-  // Base hides
+  // Base hides + gear visuals — uses the shared pipeline so menu, game,
+  // and preview all match.
   useEffect(() => {
-    clone.traverse((obj) => {
-      if (charDef.hide.includes(obj.name)) obj.visible = false
-      const mesh = obj as THREE.Mesh
-      if (mesh.isMesh) mesh.frustumCulled = false
-    })
-  }, [clone, charDef])
-
-  // Worn gear — identical rules to Caps.tsx
-  useEffect(() => {
-    const visual = computeGearVisual(selectedCharacter, gear, charDef.weapon)
-    const showSet = new Set(visual.show)
-    const hideSet = new Set(visual.hide)
-    clone.traverse((obj) => {
-      if ((GEAR_ATTACHMENT_NAMES as string[]).includes(obj.name)) {
-        obj.visible = !charDef.hide.includes(obj.name)
-      }
-      if (showSet.has(obj.name)) obj.visible = true
-      if (hideSet.has(obj.name)) obj.visible = false
-    })
-  }, [clone, gear, charDef, selectedCharacter])
+    applyPreviewGear(clone, selectedCharacter, gear, charDef.weapon)
+  }, [clone, selectedCharacter, gear, charDef.weapon])
 
   useFrame((state, delta) => {
     mixer.update(delta)

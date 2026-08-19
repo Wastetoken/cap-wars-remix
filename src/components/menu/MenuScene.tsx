@@ -2,13 +2,12 @@ import { useEffect, useMemo, useRef, useState, Suspense } from 'react'
 import * as THREE from 'three'
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { useGLTF, Html } from '@react-three/drei'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import { useGameStore } from '@/store'
 import { CHARACTERS, CHARACTER_LIST, type CharacterId } from '@/game/characters'
 import { levelForSouls } from '@/game/progression'
 import { cloneRigged } from '@/game/cloneRigged'
-import { computeGearVisual } from '@/game/gear'
+import { applyMenuHeroGear } from '@/game/gear'
 import mainMenuUrl from '@/main-menu.glb?url'
 
 // ============================================================================
@@ -111,10 +110,6 @@ const Environment = () => {
         mesh.castShadow = false
         mesh.receiveShadow = true
         const mat = mesh.material as THREE.MeshStandardMaterial
-        // The ground plane's node transform flips it, leaving world normals
-        // facing down — the key light hits nothing and hero shadows have no
-        // direct light to darken. Flip them back up (material is DoubleSide,
-        // so visibility/winding are unaffected).
         if (mat?.name === 'stylized_mud_pebbles_grass_ground_material' && !mesh.geometry.userData.normalsFlipped) {
           const normals = mesh.geometry.attributes.normal
           for (let i = 0; i < normals.count; i++) {
@@ -123,8 +118,6 @@ const Environment = () => {
           normals.needsUpdate = true
           mesh.geometry.userData.normalsFlipped = true
         }
-        // Only the 3 gate-wall pieces were designed with triplanar mapping —
-        // everything else keeps its authored UVs
         if (mat?.name === 'castle_main_gate_material2' && !mat.userData.triplanar) {
           applyTriplanar(mat, 0.5)
         }
@@ -137,17 +130,11 @@ const Environment = () => {
 const MenuHero = ({ id }: { id: CharacterId }) => {
   const selectedCharacter = useGameStore((s) => s.selectedCharacter)
   const setSelectedCharacter = useGameStore((s) => s.setSelectedCharacter)
-  // Per-character progression: each hero displays their own level + souls
   const souls = useGameStore((s) => s.characterSouls[id] ?? 0)
   const heroLevel = levelForSouls(souls)
   const charDef = CHARACTERS[id]
-  // Load the menu's OWN copy of the model ('?menu' cache-busts useGLTF).
-  // Sharing the game canvas's cached scene couples the two renderers through
-  // shared skeleton state and kills skinned draws (the "no body" bug).
   const { scene, animations } = useGLTF(charDef.model + '?menu')
   const clone = useMemo(() => cloneRigged(scene), [scene])
-  // DEBUG render-phase stash (diagnosing effect/module staleness)
-  ;((window as unknown as { __heroes?: Record<string, THREE.Object3D> }).__heroes ??= {})[id] = clone
   const mixer = useMemo(() => new THREE.AnimationMixer(clone), [clone])
   const group = useRef<THREE.Group>(null)
   const ring = useRef<THREE.Mesh>(null)
@@ -156,75 +143,14 @@ const MenuHero = ({ id }: { id: CharacterId }) => {
   const isSelected = selectedCharacter === id
 
   useEffect(() => {
-    const visual = computeGearVisual(id, [], charDef.weapon)
-    const weaponPath = visual.externalWeapon
-    const targetBoneName = visual.weaponNode || charDef.weapon
-    const groupRef = externalWeaponGroup.current
-    if (!groupRef) return
-    groupRef.clear()
-
-    if (!weaponPath) return
-
-    const loader = new GLTFLoader()
-    loader.load(
-      weaponPath,
-      (gltf) => {
-        const weaponScene = gltf.scene.clone(true)
-        clone.updateWorldMatrix(true, false)
-
-        const bones = new Map<string, THREE.Bone>()
-        clone.traverse((obj) => {
-          if (obj.isBone) bones.set(obj.name, obj)
-        })
-
-        const targetBone = bones.get(targetBoneName)
-        if (targetBone) {
-          weaponScene.traverse((child) => {
-            if (child.isMesh) {
-              child.material = Array.isArray(child.material)
-                ? child.material.map((m) => m.clone())
-                : child.material.clone()
-              child.position.set(0, 0, 0)
-              child.rotation.set(0, 0, 0)
-              child.scale.set(1, 1, 1)
-              child.updateMatrix()
-              targetBone.add(child)
-            }
-          })
-        } else {
-          console.warn(`[MenuHero] Bone "${targetBoneName}" not found, adding to group`)
-          groupRef.add(weaponScene)
-        }
-      },
-      undefined,
-      (err) => {
-        console.error('Failed to load menu external weapon:', weaponPath, err)
-      }
-    )
-
-    return () => {
-      groupRef.clear()
-    }
+    applyMenuHeroGear(clone, id, charDef.weapon, externalWeaponGroup.current)
   }, [clone, id, charDef.weapon])
-
-  useEffect(() => {
-    ;((window as unknown as { __heroes?: Record<string, THREE.Object3D> }).__heroes ??= {})[id] = clone
-    clone.traverse((obj) => {
-      if (charDef.hide.includes(obj.name)) obj.visible = false
-      const mesh = obj as THREE.Mesh
-      if (mesh.isMesh) {
-        mesh.frustumCulled = false
-        mesh.castShadow = true
-      }
-    })
-  }, [clone, charDef])
 
   useEffect(() => {
     const stance = animations.find((c) => c.name === charDef.anims.stance)
     if (!stance) return
     const action = mixer.clipAction(stance)
     action.reset().fadeIn(0.2).play()
-    // Desync heroes so they don't idle in lockstep
     action.time = Math.random() * stance.duration
     return () => {
       action.stop()
@@ -254,7 +180,6 @@ const MenuHero = ({ id }: { id: CharacterId }) => {
         <primitive object={clone} />
         <group ref={externalWeaponGroup} />
       </group>
-      {/* Click target: a tight invisible cylinder over the hero. */}
       <mesh
         position={[0, 1.2, 0]}
         onClick={(e: ThreeEvent<MouseEvent>) => {
@@ -274,7 +199,6 @@ const MenuHero = ({ id }: { id: CharacterId }) => {
         <cylinderGeometry args={[0.7, 0.7, 2.4, 12]} />
         <meshBasicMaterial visible={false} />
       </mesh>
-      {/* selection ring on the ground */}
       <mesh ref={ring} rotation-x={-Math.PI / 2} position={[0, 0.04, 0]}>
         <ringGeometry args={[1.05, 1.3, 48]} />
         <meshBasicMaterial color="#ffd98a" transparent opacity={0} side={THREE.DoubleSide} depthWrite={false} />

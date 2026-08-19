@@ -355,6 +355,7 @@ export const computeGearVisual = (
   } else if (characterId === 'barbarian') {
     weaponNode = '2H_Axe'
     externalWeapon = '/items/2h-sword-legendary-cv.glb'
+    hide.push('2H_Axe')
   }
 
   const armor = bestInSlot(gear, 'armor')
@@ -394,4 +395,164 @@ export const computeGearVisual = (
   if (trinket) trinketColor = RARITY_COLORS[trinket.rarity]
 
   return { show, hide, weaponNode, externalWeapon, wardColor, trinketColor, fullArmor }
+}
+import * as THREE from 'three'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+
+/* ============================================================================
+ * Gear visual pipeline — shared by menu, in-game, and loadout preview.
+ *
+ * Usage:
+ *   const visual = computeGearVisual(charId, gear, baseWeapon)
+ *   applyGearVisuals(clone, visual, baseWeapon, {
+ *     externalWeaponGroup: groupRef.current,
+ *     onExternalWeaponLoaded: (scene, bone) => { ... }
+ *   })
+ * ============================================================================ */
+
+export type ApplyGearVisualsOptions = {
+  /** Group to parent external weapon meshes into */
+  externalWeaponGroup?: THREE.Group | null
+  /** Called when an external weapon GLB is loaded and ready */
+  onExternalWeaponLoaded?: (weaponScene: THREE.Object3D, targetBone: THREE.Bone | null) => void
+}
+
+export const applyGearVisuals = (
+  clone: THREE.Object3D,
+  visual: GearVisual,
+  baseWeapon: string,
+  opts: ApplyGearVisualsOptions = {}
+) => {
+  const { externalWeaponGroup, onExternalWeaponLoaded } = opts
+
+  // 1. Reset all gear-touchable attachments to base visibility
+  clone.traverse((obj) => {
+    if ((GEAR_ATTACHMENT_NAMES as string[]).includes(obj.name)) {
+      obj.visible = true
+    }
+  })
+
+  // 2. Apply show/hide rules
+  const showSet = new Set(visual.show)
+  const hideSet = new Set(visual.hide)
+  clone.traverse((obj) => {
+    if (hideSet.has(obj.name)) {
+      obj.visible = false
+    } else if (showSet.has(obj.name)) {
+      obj.visible = true
+    }
+  })
+
+  // 3. Load external weapon if specified
+  if (visual.externalWeapon && externalWeaponGroup) {
+    externalWeaponGroup.clear()
+
+    const loader = new GLTFLoader()
+    loader.load(
+      visual.externalWeapon,
+      (gltf) => {
+        const weaponScene = gltf.scene.clone(true)
+        clone.updateWorldMatrix(true, false)
+
+        const bones = new Map<string, THREE.Bone>()
+        clone.traverse((obj) => {
+          if (obj.isBone) bones.set(obj.name, obj)
+        })
+
+        const targetBoneName = visual.weaponNode || baseWeapon
+        const targetBone = bones.get(targetBoneName)
+
+        weaponScene.traverse((child) => {
+          if (child.isMesh) {
+            child.material = Array.isArray(child.material)
+              ? child.material.map((m) => m.clone())
+              : child.material.clone()
+            child.position.set(0, 0, 0)
+            child.rotation.set(0, 0, 0)
+            child.scale.set(1, 1, 1)
+            child.updateMatrix()
+          }
+        })
+
+        if (targetBone) {
+          weaponScene.children.forEach((child) => targetBone.add(child))
+        } else {
+          console.warn(`[GearPipeline] Bone "${targetBoneName}" not found, adding to group`)
+          externalWeaponGroup.add(weaponScene)
+        }
+
+        onExternalWeaponLoaded?.(weaponScene, targetBone)
+      },
+      undefined,
+      (err) => {
+        console.error('Failed to load external weapon:', visual.externalWeapon, err)
+      }
+    )
+  }
+}
+
+/* ============================================================================
+ * Base hide lists — applied on clone before gear visuals
+ * ============================================================================ */
+
+const applyBaseHides = (clone: THREE.Object3D, charDef: CharacterDef) => {
+  clone.traverse((obj) => {
+    if (charDef.hide.includes(obj.name)) {
+      obj.visible = false
+    }
+    const mesh = obj as THREE.Mesh
+    if (mesh.isMesh) {
+      mesh.frustumCulled = false
+      mesh.castShadow = true
+    }
+  })
+}
+
+/* ============================================================================
+ * High-level helpers for each context
+ * ============================================================================ */
+
+export const applyMenuHeroGear = (
+  clone: THREE.Object3D,
+  characterId: string,
+  baseWeapon: string,
+  externalWeaponGroup: THREE.Group | null,
+  onExternalWeaponLoaded?: (scene: THREE.Object3D, bone: THREE.Bone | null) => void
+) => {
+  const charDef = CHARACTERS[characterId]
+  applyBaseHides(clone, charDef)
+  const visual = computeGearVisual(characterId, [], baseWeapon)
+  applyGearVisuals(clone, visual, baseWeapon, {
+    externalWeaponGroup,
+    onExternalWeaponLoaded,
+  })
+}
+
+export const applyInGameGear = (
+  clone: THREE.Object3D,
+  characterId: string,
+  gear: GearPiece[],
+  baseWeapon: string,
+  externalWeaponGroup: THREE.Group | null,
+  onExternalWeaponLoaded?: (scene: THREE.Object3D, bone: THREE.Bone | null) => void
+) => {
+  const charDef = CHARACTERS[characterId]
+  applyBaseHides(clone, charDef)
+  const visual = computeGearVisual(characterId, gear, baseWeapon)
+  applyGearVisuals(clone, visual, baseWeapon, {
+    externalWeaponGroup,
+    onExternalWeaponLoaded,
+  })
+}
+
+export const applyPreviewGear = (
+  clone: THREE.Object3D,
+  characterId: string,
+  gear: GearPiece[],
+  baseWeapon: string
+) => {
+  const charDef = CHARACTERS[characterId]
+  applyBaseHides(clone, charDef)
+  const visual = computeGearVisual(characterId, gear, baseWeapon)
+  applyGearVisuals(clone, visual, baseWeapon, {})
 }

@@ -14,8 +14,9 @@ import { slashColorBase, slashColorGlow } from '../components/particles/slash'
 import { useCapsController } from './useCapsController'
 import { registerRig, unregisterRig, PLAYER_RIG_ID } from '@/replay/rigRegistry'
 import { Energy } from '@/components/particles/energy'
+import { applyInGameGear } from '@/game/gear'
 import { CHARACTERS, CHARACTER_LIST, CHARACTER_VFX, type CharacterId } from '@/game/characters'
-import { bestGearRarity, computeGearVisual, GEAR_ATTACHMENT_NAMES, RARITY_COLORS, resolveFullArmorGlb } from '@/game/gear'
+import { bestGearRarity, RARITY_COLORS } from '@/game/gear'
 import { createEnergyRingMaterial } from '@/components/vfx/energy'
 
 // Debug flag for hitbox visualization
@@ -195,37 +196,22 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
     })
     setWeapon(weaponNode)
   }, [clone, charDef])
-  // Worn gear — show/hide attachments the loot grants, carry the sword aura
-  // on the upgraded weapon node, and expose the ward/trinket colors.
+
+  // Gear visuals — uses the shared pipeline so menu, game, and preview all match
   const [gearVisual, setGearVisual] = useState(() =>
     computeGearVisual(selectedCharacter, [], charDef.weapon)
   )
-
   useEffect(() => {
     const visual = computeGearVisual(selectedCharacter, gear, charDef.weapon)
-    const showSet = new Set(visual.show)
-    const hideSet = new Set(visual.hide)
-    clone.traverse((obj) => {
-      // Reset every gear-touchable attachment to its base state first so
-      // cleared/replaced gear never leaves orphans visible
-      if ((GEAR_ATTACHMENT_NAMES as string[]).includes(obj.name)) {
-        obj.visible = !charDef.hide.includes(obj.name)
-      }
-      if (showSet.has(obj.name)) obj.visible = true
-      if (hideSet.has(obj.name)) obj.visible = false
-      if (visual.weaponNode && obj.name === visual.weaponNode) {
-        const mesh = obj as THREE.Mesh
-        if (mesh.isMesh) {
-          mesh.material = createSwordMaterial(Array.isArray(mesh.material) ? undefined : mesh.material)
-          setWeapon(obj)
-        }
-      } else if (!visual.weaponNode && obj.name === charDef.weapon) {
-        // No weapon gear — hitbox & aura fall back to the base weapon
-        setWeapon(obj)
-      }
-    })
     setGearVisual(visual)
-  }, [clone, gear, charDef, selectedCharacter])
+    applyInGameGear(
+      clone,
+      selectedCharacter,
+      gear,
+      charDef.weapon,
+      externalWeaponGroup.current
+    )
+  }, [clone, selectedCharacter, gear, charDef.weapon])
 
   // Full armor — disabled for now, re-enable when full-character GLBs are ready
   // useEffect(() => {
@@ -291,60 +277,6 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
   //     group.clear()
   //   }
   // }, [clone, gearVisual.fullArmor])
-
-  // External weapon GLB — load and parent to the character's weapon bone
-  useEffect(() => {
-    const group = externalWeaponGroup.current
-    if (!group) return
-    group.clear()
-
-    const weaponPath = gearVisual.externalWeapon
-    if (!weaponPath) return
-
-    const loader = new GLTFLoader()
-    loader.load(
-      weaponPath,
-      (gltf) => {
-        const weaponScene = gltf.scene.clone(true)
-        
-        clone.updateWorldMatrix(true, false)
-        
-        const bones = new Map<string, THREE.Bone>()
-        clone.traverse((obj) => {
-          if (obj.isBone) bones.set(obj.name, obj)
-        })
-        
-        const targetBoneName = gearVisual.weaponNode || charDef.weapon
-        const targetBone = bones.get(targetBoneName)
-        
-        if (targetBone) {
-          weaponScene.traverse((child) => {
-            if (child.isMesh) {
-              child.material = Array.isArray(child.material)
-                ? child.material.map((m) => m.clone())
-                : child.material.clone()
-              child.position.set(0, 0, 0)
-              child.rotation.set(0, 0, 0)
-              child.scale.set(1, 1, 1)
-              child.updateMatrix()
-              targetBone.add(child)
-            }
-          })
-        } else {
-          console.warn(`[ExternalWeapon] Bone "${targetBoneName}" not found, adding to group`)
-          group.add(weaponScene)
-        }
-      },
-      undefined,
-      (err) => {
-        console.error('Failed to load external weapon:', weaponPath, err)
-      }
-    )
-
-    return () => {
-      group.clear()
-    }
-  }, [clone, gearVisual.externalWeapon, gearVisual.weaponNode, charDef.weapon])
 
   // Controller hook - handles all animation logic with character-specific clips
   const controller = useCapsController({
