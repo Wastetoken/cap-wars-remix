@@ -14,9 +14,8 @@ import { slashColorBase, slashColorGlow } from '../components/particles/slash'
 import { useCapsController } from './useCapsController'
 import { registerRig, unregisterRig, PLAYER_RIG_ID } from '@/replay/rigRegistry'
 import { Energy } from '@/components/particles/energy'
-import { applyInGameGear } from '@/game/gear'
+import { applyInGameGear, computeGearVisual, bestGearRarity, RARITY_COLORS } from '@/game/gear'
 import { CHARACTERS, CHARACTER_LIST, CHARACTER_VFX, type CharacterId } from '@/game/characters'
-import { bestGearRarity, RARITY_COLORS } from '@/game/gear'
 import { createEnergyRingMaterial } from '@/components/vfx/energy'
 
 // Debug flag for hitbox visualization

@@ -60,6 +60,19 @@
   </head>
   <body>
     <div id="root"></div>
+     <script>
+      // Polyfill GPUShaderStage for three.js WebGPU build when running in
+      // browsers without native WebGPU support. three.js accesses
+      // self.GPUShaderStage at module-load time (gpuShaderStageLib) without
+      // a fallback when self.GPUShaderStage is undefined, causing a hard crash.
+      // R3F v10's main entry imports WebGPURenderer from three/webgpu, so this
+      // module is always loaded even when falling back to the WebGL renderer.
+      (function () {
+        var w = typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : globalThis;
+        if (!w.GPUShaderStage) w.GPUShaderStage = { VERTEX: 1, FRAGMENT: 2, COMPUTE: 4 };
+        if (!w.GPUBufferUsage) w.GPUBufferUsage = { MAP_READ: 1, MAP_WRITE: 2, COPY_SRC: 4, COPY_DST: 8, STORAGE: 16, INDEX: 32, VERTEX: 64, INDIRECT: 128 };
+      })()
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
