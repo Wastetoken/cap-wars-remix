@@ -123,6 +123,12 @@ export const PlayerController = () => {
   const isDashing = useRef(false)
   const dashDelay = useRef(0)
 
+  // Double-tap dodge tracking
+  const DOUBLE_TAP_THRESHOLD = 300 // ms
+  const lastKeyPressTime = useRef<Record<string, number>>({})
+  const dodgeCooldown = useRef(0)
+  const DODGE_COOLDOWN = 500 // ms between dodges
+
   // Keyboard
   const [, get] = useKeyboardControls()
   const mobilitySparksRef = useRef<any>(null)
@@ -529,6 +535,29 @@ export const PlayerController = () => {
   useEffect(() => {
     // Expose the player rig's root to the replay recorder
     registerPlayerObject(playerRef.current)
+    const getDodgeDirection = (key: string): Vector3 | null => {
+      const store = useGameStore.getState()
+      if (isGameFrozen(store)) return null
+      const char = CHARACTERS[store.selectedCharacter]
+      const distance = char.mobility.distance * 0.5 // Half of shift dash
+      const duration = Math.max(0.08, char.mobility.duration * 0.5) // Rapid
+
+      switch (key) {
+        case 'KeyA':
+          // Dodge left (strafe left)
+          return new Vector3(-distance, 0, 0)
+        case 'KeyS':
+          // Dodge backward
+          const backward = playerRef.current?.getWorldDirection(new Vector3()) ?? new Vector3(0, 0, -1)
+          return backward.multiplyScalar(-distance)
+        case 'KeyD':
+          // Dodge right (strafe right)
+          return new Vector3(distance, 0, 0)
+        default:
+          return null
+      }
+    }
+
     const performDodge = () => {
       const store = useGameStore.getState()
       if (isGameFrozen(store)) return
@@ -537,6 +566,55 @@ export const PlayerController = () => {
           ? velocity.current.clone()
           : (playerRef.current?.getWorldDirection(new Vector3()) ?? new Vector3(0, 0, -1))
       dashTo(dashDir)
+    }
+
+    const performDoubleTapDodge = (key: string) => {
+      const store = useGameStore.getState()
+      if (isGameFrozen(store)) return
+      if (!playerRef.current) return
+      if (dodgeCooldown.current > 0) return
+      if (isDashing.current) return
+
+      const now = performance.now()
+      const lastPress = lastKeyPressTime.current[key] || 0
+      lastKeyPressTime.current[key] = now
+
+      if (now - lastPress < DOUBLE_TAP_THRESHOLD) {
+        // Double tap detected!
+        const dodgeDir = getDodgeDirection(key)
+        if (dodgeDir) {
+          dodgeCooldown.current = DODGE_COOLDOWN
+          const store = useGameStore.getState()
+          const char = CHARACTERS[store.selectedCharacter]
+          const distance = char.mobility.distance * 0.5
+          const duration = Math.max(0.08, char.mobility.duration * 0.5)
+
+          // Trigger dodge VFX
+          const o = playerRef.current.position.clone()
+          const nd = dodgeDir.clone().normalize()
+          dash({
+            direction: dodgeDir,
+            distance,
+            duration,
+            isDodge: true,
+            onStart: () => {
+              eventBus.emit(EVENTS.MOBILITY_CAST, {
+                kind: 'dash',
+                ox: o.x,
+                oz: o.z,
+                dx: o.x + nd.x * distance,
+                dz: o.z + nd.z * distance,
+                durationMs: duration * 1000,
+              })
+            },
+          })
+
+          // Clear dodge cooldown
+          window.setTimeout(() => {
+            dodgeCooldown.current = 0
+          }, DODGE_COOLDOWN)
+        }
+      }
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -578,6 +656,11 @@ export const PlayerController = () => {
 
       if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') performDodge()
 
+
+      // Double-tap dodge with A, S, D
+      if (e.code === 'KeyA' || e.code === 'KeyS' || e.code === 'KeyD') {
+        performDoubleTapDodge(e.code)
+      }
       // Abilities — slots map to the selected class's kit
       if (e.code === 'Digit1') store.triggerAbility('slot1')
       if (e.code === 'Digit2') store.triggerAbility('slot2')

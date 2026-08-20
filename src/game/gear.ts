@@ -516,11 +516,6 @@ export const applyGearVisuals = (
         const targetBoneName = visual.weaponNode || baseWeapon
         const targetBone = clone.getObjectByName(targetBoneName)
 
-        // Double size for barbarian 2H sword
-        if (targetBoneName === '2H_Axe') {
-          weaponScene.scale.set(2, 2, 2)
-        }
-
         console.log('[GearPipeline] external loaded', {
           targetBoneName,
           found: !!targetBone,
@@ -549,6 +544,11 @@ export const applyGearVisuals = (
             wrapper.quaternion.copy(targetBone.quaternion)
             wrapper.scale.copy(targetBone.scale)
 
+            // Double size for barbarian 2H sword
+            if (targetBoneName === '2H_Axe') {
+              wrapper.scale.set(2, 2, 2)
+            }
+
             const parent = targetBone.parent
             if (parent) {
               parent.add(wrapper)
@@ -557,6 +557,10 @@ export const applyGearVisuals = (
             weaponScene.children.forEach((child) => wrapper.add(child))
             targetBone.visible = false
           } else {
+            // Double size for barbarian 2H sword on bone target
+            if (targetBoneName === '2H_Axe') {
+              weaponScene.scale.set(2, 2, 2)
+            }
             weaponScene.children.forEach((child) => targetBone.add(child))
           }
           console.log('[GearPipeline] weapon parented to bone', targetBoneName)
