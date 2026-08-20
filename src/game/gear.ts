@@ -459,7 +459,7 @@ export const applyGearVisuals = (
   // The hide pass above may have set it invisible if it is a Mesh.
   if (visual.externalWeapon && visual.weaponNode) {
     const targetBone = clone.getObjectByName(visual.weaponNode)
-    if (targetBone && !targetBone.visible) {
+    if (targetBone && !targetBone.visible && !targetBone.isMesh) {
       console.log('[GearPipeline] re-showing target bone for external weapon', visual.weaponNode)
       targetBone.visible = true
     }
@@ -507,7 +507,22 @@ export const applyGearVisuals = (
         })
 
         if (targetBone) {
-          weaponScene.children.forEach((child) => targetBone.add(child))
+          if (targetBone.isMesh) {
+            const wrapper = new THREE.Group()
+            wrapper.position.copy(targetBone.position)
+            wrapper.quaternion.copy(targetBone.quaternion)
+            wrapper.scale.copy(targetBone.scale)
+
+            const parent = targetBone.parent
+            if (parent) {
+              parent.add(wrapper)
+            }
+
+            weaponScene.children.forEach((child) => wrapper.add(child))
+            targetBone.visible = false
+          } else {
+            weaponScene.children.forEach((child) => targetBone.add(child))
+          }
           console.log('[GearPipeline] weapon parented to bone', targetBoneName)
         } else if (externalWeaponGroup) {
           console.warn(`[GearPipeline] Node "${targetBoneName}" not found, adding to group`)
