@@ -221,10 +221,10 @@ export const WEAPON_ATTACHMENTS: Record<
     legendary: { show: ['2H_Staff'], hide: ['Spellbook'], node: '2H_Staff', external: '/items/staff-upgrade-cs.glb' },
   },
   rogue: {
-    common: { show: ['Throwable'], hide: [], node: 'Throwable' },
-    rare: { show: ['Throwable'], hide: [], node: 'Throwable' },
-    epic: { show: ['Throwable'], hide: [], node: 'Throwable', external: '/items/dagger-upgrade-cv.glb' },
-    legendary: { show: ['Throwable'], hide: [], node: 'Throwable', external: '/items/dagger-upgrade-cs.glb' },
+    common: { show: ['Throwable'], hide: [], node: 'Throwable', external: '/items/dagger-upgraded-v1.glb' },
+    rare: { show: ['Throwable'], hide: [], node: 'Throwable', external: '/items/dagger-upgraded-v1.glb' },
+    epic: { show: ['Throwable'], hide: [], node: 'Throwable', external: '/items/dagger-upgraded-v1.glb' },
+    legendary: { show: ['Throwable'], hide: [], node: 'Throwable', external: '/items/dagger-upgraded-v1.glb' },
   },
 }
 
@@ -261,6 +261,8 @@ const EXTERNAL_WEAPON_GLBS: Record<string, string> = {
   'staff-upgrade-cs': '/items/staff-upgrade-cs.glb',
   'dagger-upgrade-cv': '/items/dagger-upgrade-cv.glb',
   'dagger-upgrade-cs': '/items/dagger-upgrade-cs.glb',
+  'dagger-upgraded-v1': '/items/dagger-upgraded-v1.glb',
+  'dagger-upgraded-v2-x2': '/items/dagger-upgraded-v2-x2-scale.glb',
 }
 
 const EXTERNAL_WEAPON_ALIASES: Record<string, string> = {
@@ -307,8 +309,8 @@ const ALL_WEAPON_VARIANTS: Record<string, string[]> = {
     '/items/staff-upgrade-cs.glb',
   ],
   rogue: [
-    '/items/dagger-upgrade-cv.glb',
-    '/items/dagger-upgrade-cs.glb',
+    '/items/dagger-upgraded-v1.glb',
+    '/items/dagger-upgraded-v2-x2-scale.glb',
   ],
 }
 
