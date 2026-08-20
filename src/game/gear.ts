@@ -524,80 +524,116 @@ export const applyGearVisuals = (
       path: visual.externalWeapon,
       targetBoneName: visual.weaponNode || baseWeapon,
       hasGroup: !!externalWeaponGroup,
+      characterId,
     })
 
     const loader = new GLTFLoader()
-    loader.load(
-      visual.externalWeapon,
-      (gltf) => {
-        const weaponScene = gltf.scene.clone(true)
-        clone.updateWorldMatrix(true, false)
-
-        const targetBoneName = visual.weaponNode || baseWeapon
-        const targetBone = clone.getObjectByName(targetBoneName)
-
-        console.log('[GearPipeline] external loaded', {
-          targetBoneName,
-          found: !!targetBone,
-          targetType: targetBone?.type,
-          targetVisible: targetBone?.visible,
-          sceneChildren: weaponScene.children.length,
-          childNames: weaponScene.children.map((c) => c.name).slice(0, 10),
-        })
-
-        weaponScene.traverse((child) => {
-          if (child.isMesh) {
-            child.material = Array.isArray(child.material)
-              ? child.material.map((m) => m.clone())
-              : child.material.clone()
-            child.position.set(0, 0, 0)
-            child.rotation.set(0, 0, 0)
-            child.scale.set(1, 1, 1)
-            child.updateMatrix()
-          }
-        })
-
-        if (targetBone) {
-          if (targetBone.isMesh) {
-            const wrapper = new THREE.Group()
-            wrapper.position.copy(targetBone.position)
-            wrapper.quaternion.copy(targetBone.quaternion)
-            wrapper.scale.copy(targetBone.scale)
-
-            // Double size for barbarian 2H sword
-            if (targetBoneName === '2H_Axe') {
-              wrapper.scale.set(2, 2, 2)
-            }
-
-            const parent = targetBone.parent
-            if (parent) {
-              parent.add(wrapper)
-            }
-
-            weaponScene.children.forEach((child) => wrapper.add(child))
-            targetBone.visible = false
-          } else {
-            // Double size for barbarian 2H sword on bone target
-            if (targetBoneName === '2H_Axe') {
+    
+    // Dual-wield support for rogue - load two daggers
+    const isDualWield = characterId === 'rogue'
+    const targetBones = isDualWield 
+      ? ['Knife', 'Knife_Offhand'] 
+      : [visual.weaponNode || baseWeapon]
+    
+    let loadedScenes: THREE.Group[] = []
+    
+    const loadWeapon = (index: number) => {
+      return new Promise<THREE.Group>((resolve, reject) => {
+        loader.load(
+          visual.externalWeapon,
+          (gltf) => {
+            const weaponScene = gltf.scene.clone(true)
+            clone.updateWorldMatrix(true, false)
+            
+            // Apply x2 scale for rogue daggers
+            if (isDualWield) {
               weaponScene.scale.set(2, 2, 2)
             }
-            weaponScene.children.forEach((child) => targetBone.add(child))
-          }
-          console.log('[GearPipeline] weapon parented to bone', targetBoneName)
-        } else if (externalWeaponGroup) {
-          console.warn(`[GearPipeline] Node "${targetBoneName}" not found, adding to group`)
-          externalWeaponGroup.add(weaponScene)
-        } else {
-          console.warn(`[GearPipeline] Node "${targetBoneName}" not found and no externalWeaponGroup`)
-        }
 
-        onExternalWeaponLoaded?.(weaponScene, targetBone)
-      },
-      undefined,
-      (err) => {
+            weaponScene.traverse((child) => {
+              if (child.isMesh) {
+                child.material = Array.isArray(child.material)
+                  ? child.material.map((m) => m.clone())
+                  : child.material.clone()
+                child.position.set(0, 0, 0)
+                child.rotation.set(0, 0, 0)
+                child.scale.set(1, 1, 1)
+                child.updateMatrix()
+                
+                // Add depth bias to prevent z-fighting with menu geometry
+                const materials = Array.isArray(child.material) ? child.material : [child.material]
+                materials.forEach((mat: any) => {
+                  mat.polygonOffset = true
+                  mat.polygonOffsetFactor = -1
+                  mat.polygonOffsetUnits = -1
+                  mat.depthWrite = true
+                })
+              }
+            })
+
+            resolve(weaponScene)
+          },
+          undefined,
+          reject
+        )
+      })
+    }
+    
+    Promise.all(targetBones.map((boneName, index) => loadWeapon(index)))
+      .then((scenes) => {
+        loadedScenes = scenes
+        
+        scenes.forEach((weaponScene, index) => {
+          const targetBoneName = targetBones[index]
+          const targetBone = clone.getObjectByName(targetBoneName)
+
+          console.log('[GearPipeline] external loaded', {
+            targetBoneName,
+            found: !!targetBone,
+            targetType: targetBone?.type,
+            targetVisible: targetBone?.visible,
+            sceneChildren: weaponScene.children.length,
+            childNames: weaponScene.children.map((c) => c.name).slice(0, 10),
+          })
+
+          if (targetBone) {
+            if (targetBone.isMesh) {
+              const wrapper = new THREE.Group()
+              wrapper.position.copy(targetBone.position)
+              wrapper.quaternion.copy(targetBone.quaternion)
+              wrapper.scale.copy(targetBone.scale)
+
+              if (targetBoneName === '2H_Axe') {
+                wrapper.scale.set(2, 2, 2)
+              }
+
+              const parent = targetBone.parent
+              if (parent) {
+                parent.add(wrapper)
+              }
+
+              weaponScene.children.forEach((child) => wrapper.add(child))
+              targetBone.visible = false
+            } else {
+              if (targetBoneName === '2H_Axe') {
+                weaponScene.scale.set(2, 2, 2)
+              }
+              weaponScene.children.forEach((child) => targetBone.add(child))
+            }
+            console.log('[GearPipeline] weapon parented to bone', targetBoneName)
+          } else if (externalWeaponGroup) {
+            console.warn(`[GearPipeline] Node "${targetBoneName}" not found, adding to group`)
+            externalWeaponGroup.add(weaponScene)
+          } else {
+            console.warn(`[GearPipeline] Node "${targetBoneName}" not found and no externalWeaponGroup`)
+          }
+        })
+
+        onExternalWeaponLoaded?.(scenes[0], clone.getObjectByName(targetBones[0]))
+      })
+      .catch((err) => {
         console.error('Failed to load external weapon:', visual.externalWeapon, err)
-      }
-    )
+      })
   }
 }
 
