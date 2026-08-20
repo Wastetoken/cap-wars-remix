@@ -438,6 +438,7 @@ export const applyGearVisuals = (
   const hideSet = new Set(visual.hide)
   clone.traverse((obj) => {
     if (hideSet.has(obj.name)) {
+      console.log('[GearPipeline] hide match', obj.name, 'isMesh=', obj.isMesh, 'type=', obj.type)
       if (obj.isMesh) {
         obj.visible = false
       } else {
@@ -454,9 +455,25 @@ export const applyGearVisuals = (
     }
   })
 
+  // 2.5. Ensure external weapon target bone is visible so parented weapons render.
+  // The hide pass above may have set it invisible if it is a Mesh.
+  if (visual.externalWeapon && visual.weaponNode) {
+    const targetBone = clone.getObjectByName(visual.weaponNode)
+    if (targetBone && !targetBone.visible) {
+      console.log('[GearPipeline] re-showing target bone for external weapon', visual.weaponNode)
+      targetBone.visible = true
+    }
+  }
+
   // 3. Load external weapon if specified
   if (visual.externalWeapon) {
     externalWeaponGroup?.clear()
+
+    console.log('[GearPipeline] external weapon loading', {
+      path: visual.externalWeapon,
+      targetBoneName: visual.weaponNode || baseWeapon,
+      hasGroup: !!externalWeaponGroup,
+    })
 
     const loader = new GLTFLoader()
     loader.load(
@@ -467,6 +484,15 @@ export const applyGearVisuals = (
 
         const targetBoneName = visual.weaponNode || baseWeapon
         const targetBone = clone.getObjectByName(targetBoneName)
+
+        console.log('[GearPipeline] external loaded', {
+          targetBoneName,
+          found: !!targetBone,
+          targetType: targetBone?.type,
+          targetVisible: targetBone?.visible,
+          sceneChildren: weaponScene.children.length,
+          childNames: weaponScene.children.map((c) => c.name).slice(0, 10),
+        })
 
         weaponScene.traverse((child) => {
           if (child.isMesh) {
@@ -482,6 +508,7 @@ export const applyGearVisuals = (
 
         if (targetBone) {
           weaponScene.children.forEach((child) => targetBone.add(child))
+          console.log('[GearPipeline] weapon parented to bone', targetBoneName)
         } else if (externalWeaponGroup) {
           console.warn(`[GearPipeline] Node "${targetBoneName}" not found, adding to group`)
           externalWeaponGroup.add(weaponScene)
