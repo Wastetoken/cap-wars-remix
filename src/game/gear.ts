@@ -626,6 +626,18 @@ export const applyGearVisuals = (
               if (targetBoneName === '2H_Axe') {
                 weaponScene.scale.set(2, 2, 2)
               }
+              
+              // Apply hand-specific transforms for rogue daggers
+              if (isDualWield) {
+                if (targetBoneName === 'hand.r') {
+                  weaponScene.rotation.set(-Math.PI / 2, 0, 0)
+                  weaponScene.position.set(0, 0.02, -0.05)
+                } else if (targetBoneName === 'hand.l') {
+                  weaponScene.rotation.set(-Math.PI / 2, 0, 0)
+                  weaponScene.position.set(0, 0.02, -0.05)
+                }
+              }
+              
               weaponScene.children.forEach((child) => targetBone.add(child))
             }
             console.log('[GearPipeline] weapon parented to bone', targetBoneName)
