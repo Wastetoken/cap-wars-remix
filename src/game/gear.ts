@@ -455,8 +455,8 @@ export const applyGearVisuals = (
   })
 
   // 3. Load external weapon if specified
-  if (visual.externalWeapon && externalWeaponGroup) {
-    externalWeaponGroup.clear()
+  if (visual.externalWeapon) {
+    externalWeaponGroup?.clear()
 
     const loader = new GLTFLoader()
     loader.load(
@@ -467,14 +467,6 @@ export const applyGearVisuals = (
 
         const targetBoneName = visual.weaponNode || baseWeapon
         const targetBone = clone.getObjectByName(targetBoneName)
-
-        console.log('[GearPipeline] external weapon loading', {
-          path: visual.externalWeapon,
-          targetBoneName,
-          found: !!targetBone,
-          targetType: targetBone?.type,
-          sceneChildren: weaponScene.children.length,
-        })
 
         weaponScene.traverse((child) => {
           if (child.isMesh) {
@@ -490,9 +482,11 @@ export const applyGearVisuals = (
 
         if (targetBone) {
           weaponScene.children.forEach((child) => targetBone.add(child))
-        } else {
+        } else if (externalWeaponGroup) {
           console.warn(`[GearPipeline] Node "${targetBoneName}" not found, adding to group`)
           externalWeaponGroup.add(weaponScene)
+        } else {
+          console.warn(`[GearPipeline] Node "${targetBoneName}" not found and no externalWeaponGroup`)
         }
 
         onExternalWeaponLoaded?.(weaponScene, targetBone)
