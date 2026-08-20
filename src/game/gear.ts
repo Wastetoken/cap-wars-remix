@@ -390,7 +390,25 @@ export const computeGearVisual = (
     weaponNode = '2H_Axe'
     externalWeapon = '/items/2h-legendary-v2.glb'
     hide.push('2H_Axe')
+  } else if (characterId === 'knight') {
+    // Menu fallback: show sword + shield
+    weaponNode = '1H_Sword'
+    externalWeapon = '/items/1h-sword-upgrade-cv.glb'
+    hide.push('2H_Sword')
+    show.push('Round_Shield')
+  } else if (characterId === 'rogue') {
+    // Menu fallback: show upgraded daggers
+    weaponNode = 'Throwable'
+    externalWeapon = '/items/dagger-upgraded-v1.glb'
+  } else if (characterId === 'mage') {
+    // Menu fallback: show staff
+    weaponNode = '2H_Staff'
+    externalWeapon = '/items/staff-upgrade-cv.glb'
+    hide.push('Spellbook')
   }
+
+  // Menu shield fallbacks - show default shields even without armor
+
 
   const armor = bestInSlot(gear, 'armor')
   if (armor) {
