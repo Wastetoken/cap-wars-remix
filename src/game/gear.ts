@@ -221,10 +221,10 @@ export const WEAPON_ATTACHMENTS: Record<
     legendary: { show: ['2H_Staff'], hide: ['Spellbook'], node: '2H_Staff', external: '/items/staff-upgrade-cs.glb' },
   },
   rogue: {
-    common: { show: ['Throwable'], hide: [], node: 'Throwable', external: '/items/dagger-upgraded-v1.glb' },
-    rare: { show: ['Throwable'], hide: [], node: 'Throwable', external: '/items/dagger-upgraded-v1.glb' },
-    epic: { show: ['Throwable'], hide: [], node: 'Throwable', external: '/items/dagger-upgraded-v1.glb' },
-    legendary: { show: ['Throwable'], hide: [], node: 'Throwable', external: '/items/dagger-upgraded-v1.glb' },
+    common: { show: ['hand.l', 'hand.r'], hide: ['Throwable'], node: 'Throwable', external: '/items/dagger-upgraded-v1.glb' },
+    rare: { show: ['hand.l', 'hand.r'], hide: ['Throwable'], node: 'Throwable', external: '/items/dagger-upgraded-v1.glb' },
+    epic: { show: ['hand.l', 'hand.r'], hide: ['Throwable'], node: 'Throwable', external: '/items/dagger-upgraded-v1.glb' },
+    legendary: { show: ['hand.l', 'hand.r'], hide: ['Throwable'], node: 'Throwable', external: '/items/dagger-upgraded-v1.glb' },
   },
 }
 
@@ -358,6 +358,10 @@ export const GEAR_ATTACHMENT_NAMES = [
   ...KNIGHT_SHIELDS,
   'Barbarian_Round_Shield',
   'Throwable',
+  'hand.l',
+  'hand.r',
+  'Knife',
+  'Knife_Offhand',
 ]
 
 /** Resolve everything the model should wear for the current gear */
@@ -397,9 +401,11 @@ export const computeGearVisual = (
     hide.push('2H_Sword')
     show.push('Round_Shield')
   } else if (characterId === 'rogue') {
-    // Menu fallback: show upgraded daggers
+    // Menu fallback: show upgraded daggers in both hands
     weaponNode = 'Throwable'
     externalWeapon = '/items/dagger-upgraded-v1.glb'
+    show.push('hand.l', 'hand.r')
+    hide.push('Throwable')
   } else if (characterId === 'mage') {
     // Menu fallback: show staff
     weaponNode = '2H_Staff'
@@ -534,7 +540,7 @@ export const applyGearVisuals = (
     // Dual-wield support for rogue - load two daggers
     const isDualWield = characterId === 'rogue'
     const targetBones = isDualWield 
-      ? ['Knife', 'Knife_Offhand'] 
+      ? ['hand.r', 'hand.l'] 
       : [visual.weaponNode || baseWeapon]
     
     let loadedScenes: THREE.Group[] = []
