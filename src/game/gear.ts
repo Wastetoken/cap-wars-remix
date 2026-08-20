@@ -437,7 +437,17 @@ export const applyGearVisuals = (
   const hideSet = new Set(visual.hide)
   clone.traverse((obj) => {
     if (hideSet.has(obj.name)) {
-      obj.visible = false
+      if (obj.isBone) {
+        // Keep bone visible so parented external weapons remain visible,
+        // but hide mesh descendants that share the hidden attachment name.
+        obj.traverse((child) => {
+          if (child.isMesh && hideSet.has(child.name)) {
+            child.visible = false
+          }
+        })
+      } else {
+        obj.visible = false
+      }
     } else if (showSet.has(obj.name)) {
       obj.visible = true
     }
