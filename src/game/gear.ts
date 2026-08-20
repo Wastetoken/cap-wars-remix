@@ -467,6 +467,8 @@ export type ApplyGearVisualsOptions = {
   externalWeaponGroup?: THREE.Group | null
   /** Called when an external weapon GLB is loaded and ready */
   onExternalWeaponLoaded?: (weaponScene: THREE.Object3D, targetBone: THREE.Object3D | null) => void
+  /** Character ID for dual-wield detection */
+  characterId?: string
 }
 
 export const applyGearVisuals = (
@@ -475,7 +477,7 @@ export const applyGearVisuals = (
   baseWeapon: string,
   opts: ApplyGearVisualsOptions = {}
 ) => {
-  const { externalWeaponGroup, onExternalWeaponLoaded } = opts
+  const { externalWeaponGroup, onExternalWeaponLoaded, characterId } = opts
 
   // 1. Reset all gear-touchable attachments to base visibility
   clone.traverse((obj) => {
@@ -671,6 +673,7 @@ export const applyMenuHeroGear = (
   applyGearVisuals(clone, visual, baseWeapon, {
     externalWeaponGroup,
     onExternalWeaponLoaded,
+    characterId,
   })
 }
 
@@ -688,6 +691,7 @@ export const applyInGameGear = (
   applyGearVisuals(clone, visual, baseWeapon, {
     externalWeaponGroup,
     onExternalWeaponLoaded,
+    characterId,
   })
 }
 
