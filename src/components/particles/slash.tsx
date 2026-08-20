@@ -86,6 +86,7 @@ export const Slash = () => {
 
     // Dissolve edge glow - bright line at the dissolve boundary
     const dissolveEdge = smoothstep(0.0, 0.08, dissolveValue.sub(dissolveThreshold).abs())
+    // @ts-ignore - TSL type inference issue: dissolveEdge is vec3 but sub() expects float
     const dissolveEdgeIntensity = float(1).sub(dissolveEdge).mul(dissolveProgress)
 
     const xOpacity = uvX
