@@ -353,6 +353,7 @@ export const computeGearVisual = (
     // A weapon piece always at least tints the aura on the base weapon
     if (!weaponNode) weaponNode = baseWeapon
   } else if (characterId === 'barbarian') {
+    console.log('[GearPipeline] computeGearVisual barbarian no-weapon fallback')
     weaponNode = '2H_Axe'
     externalWeapon = '/items/2h-sword-legendary-cv.glb'
     hide.push('2H_Axe')
@@ -425,6 +426,16 @@ export const applyGearVisuals = (
 ) => {
   const { externalWeaponGroup, onExternalWeaponLoaded } = opts
 
+  console.log('[GearPipeline] applyGearVisuals', {
+    baseWeapon,
+    show: visual.show,
+    hide: visual.hide,
+    weaponNode: visual.weaponNode,
+    externalWeapon: visual.externalWeapon,
+    externalWeaponGroup: !!externalWeaponGroup,
+    cloneChildren: clone.children.map((c) => c.name).slice(0, 20),
+  })
+
   // 1. Reset all gear-touchable attachments to base visibility
   clone.traverse((obj) => {
     if ((GEAR_ATTACHMENT_NAMES as string[]).includes(obj.name)) {
@@ -437,9 +448,13 @@ export const applyGearVisuals = (
   const hideSet = new Set(visual.hide)
   clone.traverse((obj) => {
     if (hideSet.has(obj.name)) {
+      console.log('[GearPipeline] hide match', obj.name, 'isBone=', obj.isBone, 'type=', obj.type)
       if (obj.isBone) {
-        // Keep bone visible so parented external weapons remain visible,
-        // but hide mesh descendants that share the hidden attachment name.
+        obj.traverse((child) => {
+          if (child.isMesh) {
+            console.log('[GearPipeline] bone child mesh', child.name, 'hideSetMatch=', hideSet.has(child.name))
+          }
+        })
         obj.traverse((child) => {
           if (child.isMesh && hideSet.has(child.name)) {
             child.visible = false
@@ -472,6 +487,12 @@ export const applyGearVisuals = (
         const targetBoneName = visual.weaponNode || baseWeapon
         const targetBone = bones.get(targetBoneName)
 
+        console.log('[GearPipeline] external loaded', {
+          targetBoneName,
+          found: !!targetBone,
+          boneNames: Array.from(bones.keys()).slice(0, 30),
+        })
+
         weaponScene.traverse((child) => {
           if (child.isMesh) {
             child.material = Array.isArray(child.material)
@@ -498,6 +519,11 @@ export const applyGearVisuals = (
         console.error('Failed to load external weapon:', visual.externalWeapon, err)
       }
     )
+  } else {
+    console.log('[GearPipeline] skip external weapon load', {
+      hasExternalWeapon: !!visual.externalWeapon,
+      hasGroup: !!externalWeaponGroup,
+    })
   }
 }
 
