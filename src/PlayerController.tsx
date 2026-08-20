@@ -126,6 +126,7 @@ export const PlayerController = () => {
   // Double-tap dodge tracking
   const DOUBLE_TAP_THRESHOLD = 300 // ms
   const lastKeyPressTime = useRef<Record<string, number>>({})
+  const keyIsDown = useRef<Record<string, boolean>>({})
   const dodgeCooldown = useRef(0)
   const DODGE_COOLDOWN = 500 // ms between dodges
 
@@ -575,6 +576,10 @@ export const PlayerController = () => {
       if (dodgeCooldown.current > 0) return
       if (isDashing.current) return
 
+      // Ignore key repeat - only count the initial keydown
+      if (keyIsDown.current[key]) return
+      keyIsDown.current[key] = true
+
       const now = performance.now()
       const lastPress = lastKeyPressTime.current[key] || 0
       lastKeyPressTime.current[key] = now
@@ -674,6 +679,12 @@ export const PlayerController = () => {
       if (e.button === 0) capsRef.current?.onMouseDown()
       if (e.button === 2) capsRef.current?.onRightClick()
     }
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'KeyA' || e.code === 'KeyS' || e.code === 'KeyD') {
+        keyIsDown.current[e.code] = false
+      }
+    }
+
     const handleMouseUp = (e: MouseEvent) => {
       if (e.button === 0) capsRef.current?.onMouseUp()
       if (e.button === 2) capsRef.current?.onRightRelease()
@@ -701,6 +712,7 @@ export const PlayerController = () => {
     const onTouchBlockEnd = () => capsRef.current?.onRightRelease()
 
     window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
     window.addEventListener('mousedown', handleMouseDown)
     window.addEventListener('mouseup', handleMouseUp)
     window.addEventListener('blur', handleWindowBlur)
@@ -713,6 +725,7 @@ export const PlayerController = () => {
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
       window.removeEventListener('mousedown', handleMouseDown)
       window.removeEventListener('mouseup', handleMouseUp)
       window.removeEventListener('blur', handleWindowBlur)
