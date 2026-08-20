@@ -94,6 +94,10 @@ export const GearDrops = () => {
         } else {
           modelUrl = DROP_MODELS[piece.slot]?.[piece.rarity] ?? ''
         }
+        // Randomly upgrade some shield drops to the new upgrade shield
+        if (piece.slot === 'armor' && Math.random() < 0.25) {
+          modelUrl = '/items/upgrade-shield.glb'
+        }
       } else {
         modelUrl = DROP_MODELS[piece.slot]?.[piece.rarity] ?? ''
       }

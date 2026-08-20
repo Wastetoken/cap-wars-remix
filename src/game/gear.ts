@@ -516,6 +516,11 @@ export const applyGearVisuals = (
         const targetBoneName = visual.weaponNode || baseWeapon
         const targetBone = clone.getObjectByName(targetBoneName)
 
+        // Double size for barbarian 2H sword
+        if (targetBoneName === '2H_Axe') {
+          weaponScene.scale.set(2, 2, 2)
+        }
+
         console.log('[GearPipeline] external loaded', {
           targetBoneName,
           found: !!targetBone,
