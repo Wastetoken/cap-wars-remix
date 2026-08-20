@@ -4,7 +4,7 @@ import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { eventBus, EVENTS } from '@/constants'
 import { useGameStore, isGameFrozen } from '@/store'
-import { rollGearDrop, RARITY_COLORS, resolveDropWeaponModel, type GearPiece, type GearRarity, type GearSlot } from '@/game/gear'
+import { rollGearDrop, RARITY_COLORS, resolveRandomDropWeaponModel, type GearPiece, type GearRarity, type GearSlot } from '@/game/gear'
 import { createEnergyRingMaterial, type EnergyUniforms } from './vfx/energy'
 
 // ============================================================================
@@ -79,7 +79,7 @@ export const GearDrops = () => {
 
       let modelUrl: string
       if (piece.slot === 'weapon') {
-        const external = resolveDropWeaponModel(characterId, piece.rarity)
+        const external = resolveRandomDropWeaponModel(characterId)
         if (external) {
           modelUrl = external
         } else {

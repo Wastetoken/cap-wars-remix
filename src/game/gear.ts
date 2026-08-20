@@ -209,10 +209,10 @@ export const WEAPON_ATTACHMENTS: Record<
     legendary: { show: ['1H_Sword'], hide: ['1H_Sword_Offhand'], node: '1H_Sword', external: '/items/1h-sword-upgrade-cs.glb' },
   },
   barbarian: {
-    common: { show: [], hide: ['2H_Axe'], node: '2H_Axe', external: '/items/2h-sword-legendary-cv.glb' },
-    rare: { show: ['1H_Axe_Offhand'], hide: ['2H_Axe'], node: '2H_Axe', external: '/items/2h-sword-legendary-cv.glb' },
-    epic: { show: ['1H_Axe_Offhand'], hide: ['2H_Axe'], node: '2H_Axe', external: '/items/2h-sword-legendary-cs.glb' },
-    legendary: { show: ['1H_Axe_Offhand'], hide: ['2H_Axe'], node: '2H_Axe', external: '/items/2h-sword-legendary-cs.glb' },
+    common: { show: [], hide: ['2H_Axe'], node: '2H_Axe', external: '/items/2h-legendary-v2.glb' },
+    rare: { show: ['1H_Axe_Offhand'], hide: ['2H_Axe'], node: '2H_Axe', external: '/items/2h-legendary-v2.glb' },
+    epic: { show: ['1H_Axe_Offhand'], hide: ['2H_Axe'], node: '2H_Axe', external: '/items/2h-legendary-v2.glb' },
+    legendary: { show: ['1H_Axe_Offhand'], hide: ['2H_Axe'], node: '2H_Axe', external: '/items/2h-legendary-v2.glb' },
   },
   mage: {
     common: { show: ['2H_Staff'], hide: [], node: '2H_Staff' },
@@ -289,6 +289,37 @@ export const resolveDropWeaponModel = (
   return null
 }
 
+/** All weapon variants available for each class - used for random drops */
+const ALL_WEAPON_VARIANTS: Record<string, string[]> = {
+  knight: [
+    '/items/1h-sword-upgrade-cv.glb',
+    '/items/1h-sword-upgrade-cs.glb',
+  ],
+  barbarian: [
+    '/items/2h-legendary-v2.glb',
+    '/items/2h-sword-legendary-cv.glb',
+    '/items/2h-sword-legendary-cs.glb',
+    '/items/2h-axe-upgrade-cv.glb',
+    '/items/2h-axe-upgrade-cs.glb',
+  ],
+  mage: [
+    '/items/staff-upgrade-cv.glb',
+    '/items/staff-upgrade-cs.glb',
+  ],
+  rogue: [
+    '/items/dagger-upgrade-cv.glb',
+    '/items/dagger-upgrade-cs.glb',
+  ],
+}
+
+export const resolveRandomDropWeaponModel = (
+  characterId: string
+): string | null => {
+  const variants = ALL_WEAPON_VARIANTS[characterId]
+  if (!variants || variants.length === 0) return null
+  return variants[Math.floor(Math.random() * variants.length)]
+}
+
 const ARMOR_ATTACHMENTS: Record<string, Partial<Record<GearRarity, { show: string[] }>>> = {
   knight: {
     common: { show: ['Round_Shield'] },
@@ -355,7 +386,7 @@ export const computeGearVisual = (
   } else if (characterId === 'barbarian') {
     console.log('[GearPipeline] computeGearVisual barbarian no-weapon fallback')
     weaponNode = '2H_Axe'
-    externalWeapon = '/items/2h-sword-legendary-cv.glb'
+    externalWeapon = '/items/2h-legendary-v2.glb'
     hide.push('2H_Axe')
   }
 
