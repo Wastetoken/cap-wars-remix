@@ -38,11 +38,11 @@ export const slashColorGlow = uniform(new THREE.Color('#8f9aff'))
 export const Slash = () => {
   const { nodes } = useGLTF('/slash-1-transformed.glb') as GLTFResult
 
-  const slashNodes = ({ progress }: { progress: number }) => {
+  const slashNodes = ({ progress }: { progress: any }) => {
     // Flip UV.x based on uniform: 0 = left slash (default), 1 = right slash
     const uvX = slashFlipX.greaterThan(0.5).select(uv().x, uv().x.oneMinus())
 
-    const vor = texture(voronoiTexture, vec2(uvX, uv().y).add(float(progress)))
+    const vor = texture(voronoiTexture, vec2(uvX, uv().y).add(progress))
     const noise = texture(
       noiseTexture,
       vec2(uvX, uv().y).mul(float(0.4).add(progress.mul(0.3).mod(1)))
