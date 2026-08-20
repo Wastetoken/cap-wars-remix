@@ -468,6 +468,14 @@ export const applyGearVisuals = (
         const targetBoneName = visual.weaponNode || baseWeapon
         const targetBone = clone.getObjectByName(targetBoneName)
 
+        console.log('[GearPipeline] external weapon loading', {
+          path: visual.externalWeapon,
+          targetBoneName,
+          found: !!targetBone,
+          targetType: targetBone?.type,
+          sceneChildren: weaponScene.children.length,
+        })
+
         weaponScene.traverse((child) => {
           if (child.isMesh) {
             child.material = Array.isArray(child.material)
