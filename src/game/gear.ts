@@ -415,7 +415,7 @@ export type ApplyGearVisualsOptions = {
   /** Group to parent external weapon meshes into */
   externalWeaponGroup?: THREE.Group | null
   /** Called when an external weapon GLB is loaded and ready */
-  onExternalWeaponLoaded?: (weaponScene: THREE.Object3D, targetBone: THREE.Bone | null) => void
+  onExternalWeaponLoaded?: (weaponScene: THREE.Object3D, targetBone: THREE.Object3D | null) => void
 }
 
 export const applyGearVisuals = (
@@ -425,16 +425,6 @@ export const applyGearVisuals = (
   opts: ApplyGearVisualsOptions = {}
 ) => {
   const { externalWeaponGroup, onExternalWeaponLoaded } = opts
-
-  console.log('[GearPipeline] applyGearVisuals', {
-    baseWeapon,
-    show: visual.show,
-    hide: visual.hide,
-    weaponNode: visual.weaponNode,
-    externalWeapon: visual.externalWeapon,
-    externalWeaponGroup: !!externalWeaponGroup,
-    cloneChildren: clone.children.map((c) => c.name).slice(0, 20),
-  })
 
   // 1. Reset all gear-touchable attachments to base visibility
   clone.traverse((obj) => {
@@ -448,20 +438,16 @@ export const applyGearVisuals = (
   const hideSet = new Set(visual.hide)
   clone.traverse((obj) => {
     if (hideSet.has(obj.name)) {
-      console.log('[GearPipeline] hide match', obj.name, 'isBone=', obj.isBone, 'type=', obj.type)
-      if (obj.isBone) {
+      if (obj.isMesh) {
+        obj.visible = false
+      } else {
+        // Keep parent (bone/group) visible so external weapons parented to it
+        // render, but hide all mesh descendants that belong to this attachment.
         obj.traverse((child) => {
           if (child.isMesh) {
-            console.log('[GearPipeline] bone child mesh', child.name, 'hideSetMatch=', hideSet.has(child.name))
-          }
-        })
-        obj.traverse((child) => {
-          if (child.isMesh && hideSet.has(child.name)) {
             child.visible = false
           }
         })
-      } else {
-        obj.visible = false
       }
     } else if (showSet.has(obj.name)) {
       obj.visible = true
@@ -479,19 +465,8 @@ export const applyGearVisuals = (
         const weaponScene = gltf.scene.clone(true)
         clone.updateWorldMatrix(true, false)
 
-        const bones = new Map<string, THREE.Bone>()
-        clone.traverse((obj) => {
-          if (obj.isBone) bones.set(obj.name, obj)
-        })
-
         const targetBoneName = visual.weaponNode || baseWeapon
-        const targetBone = bones.get(targetBoneName)
-
-        console.log('[GearPipeline] external loaded', {
-          targetBoneName,
-          found: !!targetBone,
-          boneNames: Array.from(bones.keys()).slice(0, 30),
-        })
+        const targetBone = clone.getObjectByName(targetBoneName)
 
         weaponScene.traverse((child) => {
           if (child.isMesh) {
@@ -508,7 +483,7 @@ export const applyGearVisuals = (
         if (targetBone) {
           weaponScene.children.forEach((child) => targetBone.add(child))
         } else {
-          console.warn(`[GearPipeline] Bone "${targetBoneName}" not found, adding to group`)
+          console.warn(`[GearPipeline] Node "${targetBoneName}" not found, adding to group`)
           externalWeaponGroup.add(weaponScene)
         }
 
@@ -519,11 +494,6 @@ export const applyGearVisuals = (
         console.error('Failed to load external weapon:', visual.externalWeapon, err)
       }
     )
-  } else {
-    console.log('[GearPipeline] skip external weapon load', {
-      hasExternalWeapon: !!visual.externalWeapon,
-      hasGroup: !!externalWeaponGroup,
-    })
   }
 }
 
@@ -554,7 +524,7 @@ export const applyMenuHeroGear = (
   charDef: { hide: string[]; weapon: string },
   baseWeapon: string,
   externalWeaponGroup: THREE.Group | null,
-  onExternalWeaponLoaded?: (scene: THREE.Object3D, bone: THREE.Bone | null) => void
+  onExternalWeaponLoaded?: (scene: THREE.Object3D, bone: THREE.Object3D | null) => void
 ) => {
   applyBaseHides(clone, charDef)
   const visual = computeGearVisual(characterId, [], baseWeapon)
@@ -571,7 +541,7 @@ export const applyInGameGear = (
   gear: GearPiece[],
   baseWeapon: string,
   externalWeaponGroup: THREE.Group | null,
-  onExternalWeaponLoaded?: (scene: THREE.Object3D, bone: THREE.Bone | null) => void
+  onExternalWeaponLoaded?: (scene: THREE.Object3D, bone: THREE.Object3D | null) => void
 ) => {
   applyBaseHides(clone, charDef)
   const visual = computeGearVisual(characterId, gear, baseWeapon)
