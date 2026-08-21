@@ -14,7 +14,7 @@ import { slashColorBase, slashColorGlow } from '../components/particles/slash'
 import { useCapsController } from './useCapsController'
 import { registerRig, unregisterRig, PLAYER_RIG_ID } from '@/replay/rigRegistry'
 import { Energy } from '@/components/particles/energy'
-import { applyInGameGear, computeGearVisual, bestGearRarity, RARITY_COLORS, resolveArmorMeshTargetBone, unskinMesh } from '@/game/gear'
+import { applyInGameGear, computeGearVisual, bestGearRarity, RARITY_COLORS, resolveArmorMeshTargetBone, unskinMesh, hideBaseArmorMeshes } from '@/game/gear'
 import { CHARACTERS, CHARACTER_LIST, CHARACTER_VFX, type CharacterId } from '@/game/characters'
 import { createEnergyRingMaterial } from '@/components/vfx/energy'
 
@@ -223,6 +223,8 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
     const armorPath = gearVisual.fullArmor
     if (!armorPath) return
 
+    const hiddenBaseArmor = hideBaseArmorMeshes(clone, selectedCharacter)
+
     const loader = new GLTFLoader()
     loader.load(
       armorPath,
@@ -230,6 +232,7 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
         const armorScene = gltf.scene.clone(true)
 
         clone.updateWorldMatrix(true, false)
+        armorScene.updateWorldMatrix(true, false)
 
         const bones = new Map<string, THREE.Bone>()
         clone.traverse((obj) => {
@@ -252,8 +255,12 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
           const bone = targetBoneName ? bones.get(targetBoneName) : null
           if (bone) {
             matchedBones.add(child.name)
+
+            const meshWorldPos = new THREE.Vector3()
+            child.getWorldPosition(meshWorldPos)
+
             const mesh = unskinMesh(child)
-            mesh.position.set(0, 0, 0)
+            mesh.position.copy(bone.worldToLocal(meshWorldPos.clone()))
             mesh.rotation.set(0, 0, 0)
             mesh.scale.set(1, 1, 1)
             mesh.updateMatrix()
@@ -278,8 +285,11 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
 
     return () => {
       group.clear()
+      hiddenBaseArmor.forEach((mesh) => {
+        mesh.visible = true
+      })
     }
-  }, [clone, gearVisual.fullArmor])
+  }, [clone, gearVisual.fullArmor, selectedCharacter])
 
   // Controller hook - handles all animation logic with character-specific clips
   const controller = useCapsController({

@@ -1,8 +1,11 @@
 // ============================================================================
-// Gear â€” run-scoped loot dropped by elites and bosses. Auto-equips on
+// Gear — run-scoped loot dropped by elites and bosses. Auto-equips on
 // pickup, stacks for the rest of the run, lost on death. Rarity drives both
 // the stat roll and the visuals (drop glow, weapon aura, HUD chip).
 // ============================================================================
+
+import * as THREE from 'three'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
 export type GearSlot = 'weapon' | 'armor' | 'boots' | 'trinket'
 export type GearRarity = 'common' | 'rare' | 'epic' | 'legendary'
@@ -268,6 +271,22 @@ const ARMOR_PART_TO_BONE: Record<string, string> = {
   'HelmetVisor': 'head',
 }
 
+export const hideBaseArmorMeshes = (clone: THREE.Object3D, characterId: string): THREE.Mesh[] => {
+  const classPrefix = characterId.charAt(0).toUpperCase() + characterId.slice(1) + '_'
+  const hidden: THREE.Mesh[] = []
+  clone.traverse((obj) => {
+    if (!obj.isMesh) return
+    const name = obj.name
+    if (!name.startsWith(classPrefix)) return
+    const part = name.slice(classPrefix.length)
+    if (ARMOR_PART_TO_BONE[part]) {
+      obj.visible = false
+      hidden.push(obj as THREE.Mesh)
+    }
+  })
+  return hidden
+}
+
 export const resolveArmorMeshTargetBone = (meshName: string): string | null => {
   let part = meshName
   for (const prefix of CHARACTER_CLASS_PREFIXES) {
@@ -507,8 +526,6 @@ export const computeGearVisual = (
 
   return { show, hide, weaponNode, externalWeapon, wardColor, trinketColor, fullArmor }
 }
-import * as THREE from 'three'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
 /* ============================================================================
  * Gear visual pipeline — shared by menu, in-game, and loadout preview.

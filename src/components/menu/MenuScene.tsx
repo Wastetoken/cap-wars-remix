@@ -8,7 +8,7 @@ import { useGameStore } from '@/store'
 import { CHARACTERS, CHARACTER_LIST, type CharacterId } from '@/game/characters'
 import { levelForSouls } from '@/game/progression'
 import { cloneRigged } from '@/game/cloneRigged'
-import { applyMenuHeroGear, computeGearVisual, resolveArmorMeshTargetBone, unskinMesh } from '@/game/gear'
+import { applyMenuHeroGear, computeGearVisual, resolveArmorMeshTargetBone, unskinMesh, hideBaseArmorMeshes } from '@/game/gear'
 import mainMenuUrl from '@/main-menu.glb?url'
 
 // ============================================================================
@@ -161,6 +161,8 @@ const MenuHero = ({ id }: { id: CharacterId }) => {
     const armorPath = gearVisual.fullArmor
     if (!armorPath) return
 
+    const hiddenBaseArmor = hideBaseArmorMeshes(clone, id)
+
     const loader = new GLTFLoader()
     loader.load(
       armorPath,
@@ -168,6 +170,7 @@ const MenuHero = ({ id }: { id: CharacterId }) => {
         const armorScene = gltf.scene.clone(true)
 
         clone.updateWorldMatrix(true, false)
+        armorScene.updateWorldMatrix(true, false)
 
         const bones = new Map<string, THREE.Bone>()
         clone.traverse((obj) => {
@@ -190,8 +193,12 @@ const MenuHero = ({ id }: { id: CharacterId }) => {
           const bone = targetBoneName ? bones.get(targetBoneName) : null
           if (bone) {
             matchedBones.add(child.name)
+
+            const meshWorldPos = new THREE.Vector3()
+            child.getWorldPosition(meshWorldPos)
+
             const mesh = unskinMesh(child)
-            mesh.position.set(0, 0, 0)
+            mesh.position.copy(bone.worldToLocal(meshWorldPos.clone()))
             mesh.rotation.set(0, 0, 0)
             mesh.scale.set(1, 1, 1)
             mesh.updateMatrix()
@@ -216,8 +223,11 @@ const MenuHero = ({ id }: { id: CharacterId }) => {
 
     return () => {
       group.clear()
+      hiddenBaseArmor.forEach((mesh) => {
+        mesh.visible = true
+      })
     }
-  }, [clone, gearVisual.fullArmor])
+  }, [clone, gearVisual.fullArmor, id])
 
   useEffect(() => {
     const stance = animations.find((c) => c.name === charDef.anims.stance)
