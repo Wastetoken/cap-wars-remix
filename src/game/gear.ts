@@ -420,7 +420,7 @@ export const computeGearVisual = (
   if (armor) {
     const fullArmorGlb = resolveFullArmorGlb(armor.name)
     if (fullArmorGlb) {
-      fullArmor = null // Disabled until full-character GLBs are ready
+      fullArmor = fullArmorGlb
       if (characterId === 'knight') {
         hide.push(...KNIGHT_SHIELDS)
       } else if (characterId === 'barbarian') {
@@ -437,10 +437,14 @@ export const computeGearVisual = (
         wardColor = RARITY_COLORS[armor.rarity]
       }
     }
-  } else if (characterId === 'knight') {
-    show.push('Round_Shield')
-  } else if (characterId === 'barbarian') {
-    show.push('Barbarian_Round_Shield')
+  } else {
+    const menuFullArmor: Record<string, string | null> = {
+      knight: '/items/knight-armor-full-ornamental.glb',
+      barbarian: '/items/barbarian-full-bark.glb',
+      rogue: '/items/rogue-full-pine.glb',
+      mage: '/items/mage-full-lava.glb',
+    }
+    fullArmor = menuFullArmor[characterId] ?? null
   }
 
   const boots = bestInSlot(gear, 'boots')

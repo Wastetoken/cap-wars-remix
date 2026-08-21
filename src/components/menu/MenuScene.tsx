@@ -2,12 +2,13 @@ import { useEffect, useMemo, useRef, useState, Suspense } from 'react'
 import * as THREE from 'three'
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { useGLTF, Html } from '@react-three/drei'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import { useGameStore } from '@/store'
 import { CHARACTERS, CHARACTER_LIST, type CharacterId } from '@/game/characters'
 import { levelForSouls } from '@/game/progression'
 import { cloneRigged } from '@/game/cloneRigged'
-import { applyMenuHeroGear } from '@/game/gear'
+import { applyMenuHeroGear, computeGearVisual } from '@/game/gear'
 import mainMenuUrl from '@/main-menu.glb?url'
 
 // ============================================================================
@@ -139,12 +140,80 @@ const MenuHero = ({ id }: { id: CharacterId }) => {
   const group = useRef<THREE.Group>(null)
   const ring = useRef<THREE.Mesh>(null)
   const externalWeaponGroup = useRef<THREE.Group>(null)
+  const armorGroup = useRef<THREE.Group>(null)
   const [hovered, setHovered] = useState(false)
   const isSelected = selectedCharacter === id
+
+  const gearVisual = useMemo(
+    () => computeGearVisual(id, [], charDef.weapon),
+    [id, charDef.weapon]
+  )
 
   useEffect(() => {
     applyMenuHeroGear(clone, id, charDef, charDef.weapon, externalWeaponGroup.current)
   }, [clone, id, charDef.weapon])
+
+  useEffect(() => {
+    const group = armorGroup.current
+    if (!group) return
+    group.clear()
+
+    const armorPath = gearVisual.fullArmor
+    if (!armorPath) return
+
+    const loader = new GLTFLoader()
+    loader.load(
+      armorPath,
+      (gltf) => {
+        const armorScene = gltf.scene.clone(true)
+
+        clone.updateWorldMatrix(true, false)
+
+        const bones = new Map<string, THREE.Bone>()
+        clone.traverse((obj) => {
+          if (obj.isBone) bones.set(obj.name, obj)
+        })
+
+        const matchedBones = new Set<string>()
+        const unmatchedMeshes: string[] = []
+
+        armorScene.traverse((child) => {
+          if (!child.isMesh) return
+
+          child.material = Array.isArray(child.material)
+            ? child.material.map((m) => m.clone())
+            : child.material.clone()
+
+          const bone = bones.get(child.name)
+          if (bone) {
+            matchedBones.add(child.name)
+            child.position.set(0, 0, 0)
+            child.rotation.set(0, 0, 0)
+            child.scale.set(1, 1, 1)
+            child.updateMatrix()
+            bone.add(child)
+          } else {
+            unmatchedMeshes.push(child.name)
+            child.applyMatrix4(new THREE.Matrix4())
+            group.add(child)
+          }
+        })
+
+        if (unmatchedMeshes.length > 0) {
+          console.warn('[FullArmor] Unmatched meshes (no bone found):', unmatchedMeshes)
+          console.warn('[FullArmor] Available bones:', Array.from(bones.keys()))
+        }
+      },
+      undefined,
+      (err) => {
+        console.error('Failed to load full armor:', armorPath, err)
+      }
+    )
+
+    return () => {
+      group.clear()
+    }
+  }, [clone, gearVisual.fullArmor])
 
   useEffect(() => {
     const stance = animations.find((c) => c.name === charDef.anims.stance)
@@ -179,6 +248,7 @@ const MenuHero = ({ id }: { id: CharacterId }) => {
       <group ref={group} scale={charDef.scale * HERO_SCALE}>
         <primitive object={clone} />
         <group ref={externalWeaponGroup} />
+        <group ref={armorGroup} />
       </group>
       <mesh
         position={[0, 1.2, 0]}
