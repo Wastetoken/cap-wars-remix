@@ -252,6 +252,34 @@ export const resolveFullArmorGlb = (name: string): string | null => {
   return null
 }
 
+const CHARACTER_CLASS_PREFIXES = ['Barbarian_', 'Knight_', 'Rogue_', 'Mage_']
+
+const ARMOR_PART_TO_BONE: Record<string, string> = {
+  'ArmLeft': 'upperarml',
+  'ArmRight': 'upperarmr',
+  'Body': 'chest',
+  'Cape': 'chest',
+  'LegLeft': 'upperlegl',
+  'LegRight': 'upperlegr',
+  'Head': 'head',
+  'Hat': 'head',
+  'BearHat': 'head',
+  'Helmet': 'head',
+  'HelmetVisor': 'head',
+}
+
+export const resolveArmorMeshTargetBone = (meshName: string): string | null => {
+  let part = meshName
+  for (const prefix of CHARACTER_CLASS_PREFIXES) {
+    if (part.startsWith(prefix)) {
+      part = part.slice(prefix.length)
+      break
+    }
+  }
+  part = part.replace(/_n3d$/, '')
+  return ARMOR_PART_TO_BONE[part] ?? null
+}
+
 const EXTERNAL_WEAPON_GLBS: Record<string, string> = {
   '1h-sword-upgrade-cv': '/items/1h-sword-upgrade-cv.glb',
   '1h-sword-upgrade-cs': '/items/1h-sword-upgrade-cs.glb',

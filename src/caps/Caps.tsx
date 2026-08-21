@@ -14,7 +14,7 @@ import { slashColorBase, slashColorGlow } from '../components/particles/slash'
 import { useCapsController } from './useCapsController'
 import { registerRig, unregisterRig, PLAYER_RIG_ID } from '@/replay/rigRegistry'
 import { Energy } from '@/components/particles/energy'
-import { applyInGameGear, computeGearVisual, bestGearRarity, RARITY_COLORS } from '@/game/gear'
+import { applyInGameGear, computeGearVisual, bestGearRarity, RARITY_COLORS, resolveArmorMeshTargetBone } from '@/game/gear'
 import { CHARACTERS, CHARACTER_LIST, CHARACTER_VFX, type CharacterId } from '@/game/characters'
 import { createEnergyRingMaterial } from '@/components/vfx/energy'
 
@@ -246,7 +246,8 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
             ? child.material.map((m) => m.clone())
             : child.material.clone()
 
-          const bone = bones.get(child.name)
+          const targetBoneName = resolveArmorMeshTargetBone(child.name)
+          const bone = targetBoneName ? bones.get(targetBoneName) : null
           if (bone) {
             matchedBones.add(child.name)
             child.position.set(0, 0, 0)

@@ -8,7 +8,7 @@ import { useGameStore } from '@/store'
 import { CHARACTERS, CHARACTER_LIST, type CharacterId } from '@/game/characters'
 import { levelForSouls } from '@/game/progression'
 import { cloneRigged } from '@/game/cloneRigged'
-import { applyMenuHeroGear, computeGearVisual } from '@/game/gear'
+import { applyMenuHeroGear, computeGearVisual, resolveArmorMeshTargetBone } from '@/game/gear'
 import mainMenuUrl from '@/main-menu.glb?url'
 
 // ============================================================================
@@ -184,7 +184,8 @@ const MenuHero = ({ id }: { id: CharacterId }) => {
             ? child.material.map((m) => m.clone())
             : child.material.clone()
 
-          const bone = bones.get(child.name)
+          const targetBoneName = resolveArmorMeshTargetBone(child.name)
+          const bone = targetBoneName ? bones.get(targetBoneName) : null
           if (bone) {
             matchedBones.add(child.name)
             child.position.set(0, 0, 0)
