@@ -179,8 +179,10 @@ export type GearVisual = {
   hide: string[]
   /** The node that should carry the sword aura material */
   weaponNode: string | null
-  /** External weapon GLB path â€” loaded and parented to weaponNode at runtime */
+  /** External weapon GLB path — loaded and parented to weaponNode at runtime */
   externalWeapon: string | null
+  /** External offhand weapon GLB path — loaded and parented to offhand node */
+  externalWeaponOffhand: string | null
   /** Ward ring color at the feet (boots, or mage's armor ward) */
   wardColor: string | null
   /** Orbiting trinket charm */
@@ -200,7 +202,7 @@ const bestInSlot = (gear: GearPiece[], slot: GearSlot): GearPiece | null =>
 /** Per-class attachment loadout for a given weapon/armor rarity */
 export const WEAPON_ATTACHMENTS: Record<
   string,
-  Partial<Record<GearRarity, { show: string[]; hide: string[]; node: string; external?: string }>>
+  Partial<Record<GearRarity, { show: string[]; hide: string[]; node: string; external?: string; externalOffhand?: string }>>
 > = {
   knight: {
     common: { show: ['1H_Sword'], hide: [], node: '1H_Sword' },
@@ -209,10 +211,10 @@ export const WEAPON_ATTACHMENTS: Record<
     legendary: { show: ['1H_Sword'], hide: ['1H_Sword_Offhand'], node: '1H_Sword', external: '/items/1h-sword-upgrade-cs.glb' },
   },
   barbarian: {
-    common: { show: [], hide: ['2H_Axe', '1H_Axe_Offhand'], node: '2H_Axe', external: '/items/2h-legendary-v2.glb' },
-    rare: { show: [], hide: ['2H_Axe', '1H_Axe_Offhand'], node: '2H_Axe', external: '/items/2h-legendary-v2.glb' },
-    epic: { show: [], hide: ['2H_Axe', '1H_Axe_Offhand'], node: '2H_Axe', external: '/items/2h-legendary-v2.glb' },
-    legendary: { show: [], hide: ['2H_Axe', '1H_Axe_Offhand'], node: '2H_Axe', external: '/items/2h-legendary-v2.glb' },
+    common: { show: [], hide: ['2H_Axe', '1H_Axe_Offhand'], node: '2H_Axe', external: '/items/2h-legendary-v2.glb', externalOffhand: '/items/2h-sword-legendary-cv.glb' },
+    rare: { show: [], hide: ['2H_Axe', '1H_Axe_Offhand'], node: '2H_Axe', external: '/items/2h-legendary-v2.glb', externalOffhand: '/items/2h-sword-legendary-cv.glb' },
+    epic: { show: [], hide: ['2H_Axe', '1H_Axe_Offhand'], node: '2H_Axe', external: '/items/2h-legendary-v2.glb', externalOffhand: '/items/2h-sword-legendary-cv.glb' },
+    legendary: { show: [], hide: ['2H_Axe', '1H_Axe_Offhand'], node: '2H_Axe', external: '/items/2h-legendary-v2.glb', externalOffhand: '/items/2h-sword-legendary-cv.glb' },
   },
   mage: {
     common: { show: ['2H_Staff'], hide: [], node: '2H_Staff' },
@@ -373,6 +375,7 @@ export const computeGearVisual = (
   const hide: string[] = []
   let weaponNode: string | null = null
   let externalWeapon: string | null = null
+  let externalWeaponOffhand: string | null = null
   let wardColor: string | null = null
   let trinketColor: string | null = null
   let fullArmor: string | null = null
@@ -385,6 +388,7 @@ export const computeGearVisual = (
       hide.push(...table.hide)
       weaponNode = table.node
       if (table.external) externalWeapon = table.external
+      if (table.externalOffhand) externalWeaponOffhand = table.externalOffhand
     }
     // A weapon piece always at least tints the aura on the base weapon
     if (!weaponNode) weaponNode = baseWeapon
@@ -392,6 +396,7 @@ export const computeGearVisual = (
     console.log('[GearPipeline] computeGearVisual barbarian no-weapon fallback')
     weaponNode = '2H_Axe'
     externalWeapon = '/items/2h-legendary-v2.glb'
+    externalWeaponOffhand = '/items/2h-sword-legendary-cv.glb'
     hide.push('2H_Axe', '1H_Axe_Offhand')
   } else if (characterId === 'knight') {
     // Menu fallback: show sword + shield
@@ -451,7 +456,7 @@ export const computeGearVisual = (
   const trinket = bestInSlot(gear, 'trinket')
   if (trinket) trinketColor = RARITY_COLORS[trinket.rarity]
 
-  return { show, hide, weaponNode, externalWeapon, wardColor, trinketColor, fullArmor }
+  return { show, hide, weaponNode, externalWeapon, externalWeaponOffhand, wardColor, trinketColor, fullArmor }
 }
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
@@ -543,14 +548,22 @@ export const applyGearVisuals = (
 
     const loader = new GLTFLoader()
     
-    // Dual-wield support for rogue - load two daggers
+    // Dual-wield support for rogue / barbarian - load two weapons
     
     let loadedScenes: THREE.Group[] = []
     
+    const getWeaponPath = (index: number): string => {
+      if (characterId === 'barbarian' && index === 1 && visual.externalWeaponOffhand) {
+        return visual.externalWeaponOffhand
+      }
+      return visual.externalWeapon
+    }
+    
     const loadWeapon = (index: number) => {
+      const weaponPath = getWeaponPath(index)
       return new Promise<THREE.Group>((resolve, reject) => {
         loader.load(
-          visual.externalWeapon,
+          weaponPath,
           (gltf) => {
             const weaponScene = gltf.scene.clone(true)
             clone.updateWorldMatrix(true, false)
