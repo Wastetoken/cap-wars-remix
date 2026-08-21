@@ -280,6 +280,27 @@ export const resolveArmorMeshTargetBone = (meshName: string): string | null => {
   return ARMOR_PART_TO_BONE[part] ?? null
 }
 
+export const unskinMesh = (mesh: THREE.Object3D): THREE.Object3D => {
+  if (!mesh.isSkinnedMesh) return mesh
+  const regular = new THREE.Mesh(mesh.geometry, mesh.material)
+  regular.position.copy(mesh.position)
+  regular.rotation.copy(mesh.rotation)
+  regular.scale.copy(mesh.scale)
+  regular.matrix.copy(mesh.matrix)
+  regular.matrixWorld.copy(mesh.matrixWorld)
+  regular.visible = mesh.visible
+  regular.castShadow = mesh.castShadow
+  regular.receiveShadow = mesh.receiveShadow
+  regular.frustumCulled = mesh.frustumCulled
+  regular.renderOrder = mesh.renderOrder
+  regular.material.depthWrite = mesh.material.depthWrite
+  regular.material.depthTest = mesh.material.depthTest
+  regular.material.polygonOffset = mesh.material.polygonOffset
+  regular.material.polygonOffsetFactor = mesh.material.polygonOffsetFactor
+  regular.material.polygonOffsetUnits = mesh.material.polygonOffsetUnits
+  return regular
+}
+
 const EXTERNAL_WEAPON_GLBS: Record<string, string> = {
   '1h-sword-upgrade-cv': '/items/1h-sword-upgrade-cv.glb',
   '1h-sword-upgrade-cs': '/items/1h-sword-upgrade-cs.glb',

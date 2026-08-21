@@ -8,7 +8,7 @@ import { useGameStore } from '@/store'
 import { CHARACTERS, CHARACTER_LIST, type CharacterId } from '@/game/characters'
 import { levelForSouls } from '@/game/progression'
 import { cloneRigged } from '@/game/cloneRigged'
-import { applyMenuHeroGear, computeGearVisual, resolveArmorMeshTargetBone } from '@/game/gear'
+import { applyMenuHeroGear, computeGearVisual, resolveArmorMeshTargetBone, unskinMesh } from '@/game/gear'
 import mainMenuUrl from '@/main-menu.glb?url'
 
 // ============================================================================
@@ -190,11 +190,12 @@ const MenuHero = ({ id }: { id: CharacterId }) => {
           const bone = targetBoneName ? bones.get(targetBoneName) : null
           if (bone) {
             matchedBones.add(child.name)
-            child.position.set(0, 0, 0)
-            child.rotation.set(0, 0, 0)
-            child.scale.set(1, 1, 1)
-            child.updateMatrix()
-            bone.add(child)
+            const mesh = unskinMesh(child)
+            mesh.position.set(0, 0, 0)
+            mesh.rotation.set(0, 0, 0)
+            mesh.scale.set(1, 1, 1)
+            mesh.updateMatrix()
+            bone.add(mesh)
           } else {
             unmatchedMeshes.push(child.name)
             child.applyMatrix4(new THREE.Matrix4())

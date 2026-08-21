@@ -14,7 +14,7 @@ import { slashColorBase, slashColorGlow } from '../components/particles/slash'
 import { useCapsController } from './useCapsController'
 import { registerRig, unregisterRig, PLAYER_RIG_ID } from '@/replay/rigRegistry'
 import { Energy } from '@/components/particles/energy'
-import { applyInGameGear, computeGearVisual, bestGearRarity, RARITY_COLORS, resolveArmorMeshTargetBone } from '@/game/gear'
+import { applyInGameGear, computeGearVisual, bestGearRarity, RARITY_COLORS, resolveArmorMeshTargetBone, unskinMesh } from '@/game/gear'
 import { CHARACTERS, CHARACTER_LIST, CHARACTER_VFX, type CharacterId } from '@/game/characters'
 import { createEnergyRingMaterial } from '@/components/vfx/energy'
 
@@ -252,11 +252,12 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
           const bone = targetBoneName ? bones.get(targetBoneName) : null
           if (bone) {
             matchedBones.add(child.name)
-            child.position.set(0, 0, 0)
-            child.rotation.set(0, 0, 0)
-            child.scale.set(1, 1, 1)
-            child.updateMatrix()
-            bone.add(child)
+            const mesh = unskinMesh(child)
+            mesh.position.set(0, 0, 0)
+            mesh.rotation.set(0, 0, 0)
+            mesh.scale.set(1, 1, 1)
+            mesh.updateMatrix()
+            bone.add(mesh)
           } else {
             unmatchedMeshes.push(child.name)
             child.applyMatrix4(new THREE.Matrix4())
