@@ -221,10 +221,10 @@ export const WEAPON_ATTACHMENTS: Record<
     legendary: { show: ['2H_Staff'], hide: ['Spellbook'], node: '2H_Staff', external: '/items/staff-upgrade-cs.glb' },
   },
   rogue: {
-    common: { show: ['hand.l', 'hand.r'], hide: ['Throwable'], node: 'Throwable', external: '/items/dagger-upgraded-v1.glb' },
-    rare: { show: ['hand.l', 'hand.r'], hide: ['Throwable'], node: 'Throwable', external: '/items/dagger-upgraded-v1.glb' },
-    epic: { show: ['hand.l', 'hand.r'], hide: ['Throwable'], node: 'Throwable', external: '/items/dagger-upgraded-v1.glb' },
-    legendary: { show: ['hand.l', 'hand.r'], hide: ['Throwable'], node: 'Throwable', external: '/items/dagger-upgraded-v1.glb' },
+    common: { show: [], hide: ['Throwable', 'Knife', 'Knife_Offhand'], node: 'Throwable', external: '/items/dagger-upgraded-v1.glb' },
+    rare: { show: [], hide: ['Throwable', 'Knife', 'Knife_Offhand'], node: 'Throwable', external: '/items/dagger-upgraded-v1.glb' },
+    epic: { show: [], hide: ['Throwable', 'Knife', 'Knife_Offhand'], node: 'Throwable', external: '/items/dagger-upgraded-v1.glb' },
+    legendary: { show: [], hide: ['Throwable', 'Knife', 'Knife_Offhand'], node: 'Throwable', external: '/items/dagger-upgraded-v1.glb' },
   },
 }
 
@@ -405,7 +405,7 @@ export const computeGearVisual = (
     weaponNode = 'Throwable'
     externalWeapon = '/items/dagger-upgraded-v1.glb'
     show.push('hand.l', 'hand.r')
-    hide.push('Throwable')
+    hide.push('Throwable', 'Knife', 'Knife_Offhand')
   } else if (characterId === 'mage') {
     // Menu fallback: show staff
     weaponNode = '2H_Staff'
@@ -540,7 +540,7 @@ export const applyGearVisuals = (
     // Dual-wield support for rogue - load two daggers
     const isDualWield = characterId === 'rogue'
     const targetBones = isDualWield 
-      ? ['hand.r', 'hand.l'] 
+      ? ['Throwable', 'Throwable'] 
       : [visual.weaponNode || baseWeapon]
     
     let loadedScenes: THREE.Group[] = []
@@ -628,17 +628,28 @@ export const applyGearVisuals = (
               }
               
               // Apply hand-specific transforms for rogue daggers
-              if (isDualWield) {
-                if (targetBoneName === 'hand.r') {
-                  weaponScene.rotation.set(-Math.PI / 2, 0, 0)
-                  weaponScene.position.set(0, 0.02, -0.05)
-                } else if (targetBoneName === 'hand.l') {
-                  weaponScene.rotation.set(-Math.PI / 2, 0, 0)
-                  weaponScene.position.set(0, 0.02, -0.05)
+              if (isDualWield && targetBoneName === 'Throwable') {
+                // Reset weaponScene transform before parenting
+                weaponScene.position.set(0, 0, 0)
+                weaponScene.rotation.set(0, 0, 0)
+                weaponScene.scale.set(1, 1, 1)
+                
+                // Add the whole scene to the target bone, then offset in local space
+                targetBone.add(weaponScene)
+                
+                // Right hand dagger (index 0)
+                if (index === 0) {
+                  weaponScene.position.set(0.1, 0, 0)
+                  weaponScene.rotation.set(0, 0, -Math.PI / 2)
                 }
+                // Left hand dagger (index 1)
+                else if (index === 1) {
+                  weaponScene.position.set(-0.1, 0, 0)
+                  weaponScene.rotation.set(0, 0, Math.PI / 2)
+                }
+              } else {
+                weaponScene.children.forEach((child) => targetBone.add(child))
               }
-              
-              weaponScene.children.forEach((child) => targetBone.add(child))
             }
             console.log('[GearPipeline] weapon parented to bone', targetBoneName)
           } else if (externalWeaponGroup) {
