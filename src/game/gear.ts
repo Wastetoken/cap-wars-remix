@@ -209,10 +209,10 @@ export const WEAPON_ATTACHMENTS: Record<
     legendary: { show: ['1H_Sword'], hide: ['1H_Sword_Offhand'], node: '1H_Sword', external: '/items/1h-sword-upgrade-cs.glb' },
   },
   barbarian: {
-    common: { show: [], hide: ['2H_Axe'], node: '2H_Axe', external: '/items/2h-legendary-v2.glb' },
-    rare: { show: ['1H_Axe_Offhand'], hide: ['2H_Axe'], node: '2H_Axe', external: '/items/2h-legendary-v2.glb' },
-    epic: { show: ['1H_Axe_Offhand'], hide: ['2H_Axe'], node: '2H_Axe', external: '/items/2h-legendary-v2.glb' },
-    legendary: { show: ['1H_Axe_Offhand'], hide: ['2H_Axe'], node: '2H_Axe', external: '/items/2h-legendary-v2.glb' },
+    common: { show: [], hide: ['2H_Axe', '1H_Axe_Offhand'], node: '2H_Axe', external: '/items/2h-legendary-v2.glb' },
+    rare: { show: [], hide: ['2H_Axe', '1H_Axe_Offhand'], node: '2H_Axe', external: '/items/2h-legendary-v2.glb' },
+    epic: { show: [], hide: ['2H_Axe', '1H_Axe_Offhand'], node: '2H_Axe', external: '/items/2h-legendary-v2.glb' },
+    legendary: { show: [], hide: ['2H_Axe', '1H_Axe_Offhand'], node: '2H_Axe', external: '/items/2h-legendary-v2.glb' },
   },
   mage: {
     common: { show: ['2H_Staff'], hide: [], node: '2H_Staff' },
@@ -392,7 +392,7 @@ export const computeGearVisual = (
     console.log('[GearPipeline] computeGearVisual barbarian no-weapon fallback')
     weaponNode = '2H_Axe'
     externalWeapon = '/items/2h-legendary-v2.glb'
-    hide.push('2H_Axe')
+    hide.push('2H_Axe', '1H_Axe_Offhand')
   } else if (characterId === 'knight') {
     // Menu fallback: show sword + shield
     weaponNode = '1H_Sword'
@@ -423,7 +423,7 @@ export const computeGearVisual = (
       if (characterId === 'knight') {
         hide.push(...KNIGHT_SHIELDS)
       } else if (characterId === 'barbarian') {
-        hide.push(...KNIGHT_SHIELDS)
+        hide.push('Barbarian_Round_Shield', '1H_Axe_Offhand')
       }
     } else {
       const table = ARMOR_ATTACHMENTS[characterId]?.[armor.rarity]
@@ -517,9 +517,11 @@ export const applyGearVisuals = (
   // The hide pass above may have set them invisible.
   // 3. Load external weapon if specified
   if (visual.externalWeapon) {
-    const isDualWield = characterId === 'rogue'
+    const isDualWield = characterId === 'rogue' || characterId === 'barbarian'
     const targetBones = isDualWield
-      ? ['Knife', 'Knife_Offhand']
+      ? characterId === 'rogue'
+        ? ['Knife', 'Knife_Offhand']
+        : ['2H_Axe', '1H_Axe_Offhand']
       : [visual.weaponNode || baseWeapon].filter(Boolean)
 
     targetBones.forEach((boneName) => {
@@ -554,7 +556,7 @@ export const applyGearVisuals = (
             clone.updateWorldMatrix(true, false)
             
             // Apply x2 scale for rogue daggers
-            if (isDualWield) {
+            if (isDualWield && characterId === 'rogue') {
               weaponScene.scale.set(2, 2, 2)
             }
 
@@ -640,20 +642,27 @@ export const applyGearVisuals = (
                 weaponScene.children.forEach((child) => targetBone.add(child))
               }
               
-              // Apply hand-specific transforms for rogue daggers
+              // Apply hand-specific transforms for rogue daggers / barbarian offhand axe
               if (isDualWield) {
                 weaponScene.position.set(0, 0, 0)
                 weaponScene.rotation.set(0, 0, 0)
                 
-                // Right hand dagger (index 0 -> Knife)
-                if (index === 0) {
-                  weaponScene.position.set(0.05, 0, 0)
-                  weaponScene.rotation.set(0, 0, -Math.PI / 2)
-                }
-                // Left hand dagger (index 1 -> Knife_Offhand)
-                else if (index === 1) {
-                  weaponScene.position.set(-0.05, 0, 0)
-                  weaponScene.rotation.set(0, 0, Math.PI / 2)
+                if (characterId === 'rogue') {
+                  // Right hand dagger (index 0 -> Knife)
+                  if (index === 0) {
+                    weaponScene.position.set(0.05, 0, 0)
+                    weaponScene.rotation.set(0, 0, -Math.PI / 2)
+                  }
+                  // Left hand dagger (index 1 -> Knife_Offhand)
+                  else if (index === 1) {
+                    weaponScene.position.set(-0.05, 0, 0)
+                    weaponScene.rotation.set(0, 0, Math.PI / 2)
+                  }
+                } else if (characterId === 'barbarian') {
+                  // Offhand 2H axe (index 1 -> 1H_Axe_Offhand)
+                  if (index === 1) {
+                    weaponScene.scale.set(-1, 1, 1)
+                  }
                 }
               }
             }
