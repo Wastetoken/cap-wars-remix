@@ -514,23 +514,28 @@ export const applyGearVisuals = (
     }
   })
 
-  // 2.5. Ensure external weapon target bone is visible so parented weapons render.
-  // The hide pass above may have set it invisible if it is a Mesh.
-  if (visual.externalWeapon && visual.weaponNode) {
-    const targetBone = clone.getObjectByName(visual.weaponNode)
-    if (targetBone && !targetBone.visible && !targetBone.isMesh) {
-      console.log('[GearPipeline] re-showing target bone for external weapon', visual.weaponNode)
-      targetBone.visible = true
-    }
-  }
-
+  // 2.5. Ensure external weapon target bones are visible so parented weapons render.
+  // The hide pass above may have set them invisible.
   // 3. Load external weapon if specified
   if (visual.externalWeapon) {
+    const isDualWield = characterId === 'rogue'
+    const targetBones = isDualWield
+      ? ['Knife', 'Knife_Offhand']
+      : [visual.weaponNode || baseWeapon].filter(Boolean)
+
+    targetBones.forEach((boneName) => {
+      const bone = clone.getObjectByName(boneName)
+      if (bone && !bone.visible) {
+        console.log('[GearPipeline] re-showing target bone for external weapon', boneName)
+        bone.visible = true
+      }
+    })
+
     externalWeaponGroup?.clear()
 
     console.log('[GearPipeline] external weapon loading', {
       path: visual.externalWeapon,
-      targetBoneName: visual.weaponNode || baseWeapon,
+      targetBoneName: targetBones[0] || baseWeapon,
       hasGroup: !!externalWeaponGroup,
       characterId,
     })
@@ -538,10 +543,6 @@ export const applyGearVisuals = (
     const loader = new GLTFLoader()
     
     // Dual-wield support for rogue - load two daggers
-    const isDualWield = characterId === 'rogue'
-    const targetBones = isDualWield 
-      ? ['Throwable', 'Throwable'] 
-      : [visual.weaponNode || baseWeapon]
     
     let loadedScenes: THREE.Group[] = []
     
@@ -574,8 +575,8 @@ export const applyGearVisuals = (
                 const materials = Array.isArray(child.material) ? child.material : [child.material]
                 materials.forEach((mat: any) => {
                   mat.polygonOffset = true
-                  mat.polygonOffsetFactor = -4
-                  mat.polygonOffsetUnits = -4
+                  mat.polygonOffsetFactor = -6
+                  mat.polygonOffsetUnits = -6
                   mat.depthWrite = true
                 })
               }
@@ -622,35 +623,39 @@ export const applyGearVisuals = (
                 parent.add(wrapper)
               }
 
-              weaponScene.children.forEach((child) => wrapper.add(child))
+              if (isDualWield) {
+                wrapper.add(weaponScene)
+              } else {
+                weaponScene.children.forEach((child) => wrapper.add(child))
+              }
               targetBone.visible = false
             } else {
               if (targetBoneName === '2H_Axe') {
-                weaponScene.scale.set(2, 2, 2)
+                weaponScene.children.forEach((child) => {
+                  child.scale.set(2, 2, 2)
+                  targetBone.add(child)
+                })
+              } else if (isDualWield) {
+                targetBone.add(weaponScene)
+              } else {
+                weaponScene.children.forEach((child) => targetBone.add(child))
               }
               
               // Apply hand-specific transforms for rogue daggers
-              if (isDualWield && targetBoneName === 'Throwable') {
-                // Reset weaponScene transform before parenting
+              if (isDualWield) {
                 weaponScene.position.set(0, 0, 0)
                 weaponScene.rotation.set(0, 0, 0)
-                weaponScene.scale.set(1, 1, 1)
                 
-                // Add the whole scene to the target bone, then offset in local space
-                targetBone.add(weaponScene)
-                
-                // Right hand dagger (index 0)
+                // Right hand dagger (index 0 -> Knife)
                 if (index === 0) {
-                  weaponScene.position.set(0.1, 0, 0)
+                  weaponScene.position.set(0.05, 0, 0)
                   weaponScene.rotation.set(0, 0, -Math.PI / 2)
                 }
-                // Left hand dagger (index 1)
+                // Left hand dagger (index 1 -> Knife_Offhand)
                 else if (index === 1) {
-                  weaponScene.position.set(-0.1, 0, 0)
+                  weaponScene.position.set(-0.05, 0, 0)
                   weaponScene.rotation.set(0, 0, Math.PI / 2)
                 }
-              } else {
-                weaponScene.children.forEach((child) => targetBone.add(child))
               }
             }
             console.log('[GearPipeline] weapon parented to bone', targetBoneName)
