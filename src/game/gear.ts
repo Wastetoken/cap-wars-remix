@@ -563,17 +563,19 @@ export const applyGearVisuals = (
                 child.material = Array.isArray(child.material)
                   ? child.material.map((m) => m.clone())
                   : child.material.clone()
-                child.position.set(0, 0, 0)
-                child.rotation.set(0, 0, 0)
-                child.scale.set(1, 1, 1)
-                child.updateMatrix()
-                
-                // Add depth bias to prevent z-fighting with menu geometry
+              }
+              child.position.set(0, 0, 0)
+              child.rotation.set(0, 0, 0)
+              child.scale.set(1, 1, 1)
+              child.updateMatrix()
+              
+              // Add depth bias to prevent z-fighting with menu geometry
+              if (child.isMesh) {
                 const materials = Array.isArray(child.material) ? child.material : [child.material]
                 materials.forEach((mat: any) => {
                   mat.polygonOffset = true
-                  mat.polygonOffsetFactor = -1
-                  mat.polygonOffsetUnits = -1
+                  mat.polygonOffsetFactor = -4
+                  mat.polygonOffsetUnits = -4
                   mat.depthWrite = true
                 })
               }
