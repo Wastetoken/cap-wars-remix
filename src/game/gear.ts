@@ -674,7 +674,7 @@ export const applyGearVisuals = (
                 } else if (characterId === 'barbarian') {
                   // Offhand 2H axe (index 1 -> 1H_Axe_Offhand)
                   if (index === 1) {
-                    weaponScene.scale.set(-1, 1, 1)
+                    weaponScene.scale.set(-2, 2, 2)
                   }
                 }
               }
