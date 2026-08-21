@@ -1,11 +1,8 @@
 // ============================================================================
-// Gear — run-scoped loot dropped by elites and bosses. Auto-equips on
+// Gear â€” run-scoped loot dropped by elites and bosses. Auto-equips on
 // pickup, stacks for the rest of the run, lost on death. Rarity drives both
 // the stat roll and the visuals (drop glow, weapon aura, HUD chip).
 // ============================================================================
-
-import * as THREE from 'three'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
 export type GearSlot = 'weapon' | 'armor' | 'boots' | 'trinket'
 export type GearRarity = 'common' | 'rare' | 'epic' | 'legendary'
@@ -255,71 +252,6 @@ export const resolveFullArmorGlb = (name: string): string | null => {
   return null
 }
 
-const CHARACTER_CLASS_PREFIXES = ['Barbarian_', 'Knight_', 'Rogue_', 'Mage_']
-
-const ARMOR_PART_TO_BONE: Record<string, string> = {
-  'ArmLeft': 'upperarml',
-  'ArmRight': 'upperarmr',
-  'Body': 'chest',
-  'Cape': 'chest',
-  'LegLeft': 'upperlegl',
-  'LegRight': 'upperlegr',
-  'Head': 'head',
-  'Hat': 'head',
-  'BearHat': 'head',
-  'Helmet': 'head',
-  'HelmetVisor': 'head',
-}
-
-export const hideBaseArmorMeshes = (clone: THREE.Object3D, characterId: string): THREE.Mesh[] => {
-  const classPrefix = characterId.charAt(0).toUpperCase() + characterId.slice(1) + '_'
-  const hidden: THREE.Mesh[] = []
-  clone.traverse((obj) => {
-    if (!obj.isMesh) return
-    const name = obj.name
-    if (!name.startsWith(classPrefix)) return
-    const part = name.slice(classPrefix.length)
-    if (ARMOR_PART_TO_BONE[part]) {
-      obj.visible = false
-      hidden.push(obj as THREE.Mesh)
-    }
-  })
-  return hidden
-}
-
-export const resolveArmorMeshTargetBone = (meshName: string): string | null => {
-  let part = meshName
-  for (const prefix of CHARACTER_CLASS_PREFIXES) {
-    if (part.startsWith(prefix)) {
-      part = part.slice(prefix.length)
-      break
-    }
-  }
-  part = part.replace(/_n3d$/, '')
-  return ARMOR_PART_TO_BONE[part] ?? null
-}
-
-export const unskinMesh = (mesh: THREE.Object3D): THREE.Object3D => {
-  if (!mesh.isSkinnedMesh) return mesh
-  const regular = new THREE.Mesh(mesh.geometry, mesh.material)
-  regular.position.copy(mesh.position)
-  regular.rotation.copy(mesh.rotation)
-  regular.scale.copy(mesh.scale)
-  regular.matrix.copy(mesh.matrix)
-  regular.matrixWorld.copy(mesh.matrixWorld)
-  regular.visible = mesh.visible
-  regular.castShadow = mesh.castShadow
-  regular.receiveShadow = mesh.receiveShadow
-  regular.frustumCulled = mesh.frustumCulled
-  regular.renderOrder = mesh.renderOrder
-  regular.material.depthWrite = mesh.material.depthWrite
-  regular.material.depthTest = mesh.material.depthTest
-  regular.material.polygonOffset = mesh.material.polygonOffset
-  regular.material.polygonOffsetFactor = mesh.material.polygonOffsetFactor
-  regular.material.polygonOffsetUnits = mesh.material.polygonOffsetUnits
-  return regular
-}
-
 const EXTERNAL_WEAPON_GLBS: Record<string, string> = {
   '1h-sword-upgrade-cv': '/items/1h-sword-upgrade-cv.glb',
   '1h-sword-upgrade-cs': '/items/1h-sword-upgrade-cs.glb',
@@ -398,10 +330,10 @@ const ARMOR_ATTACHMENTS: Record<string, Partial<Record<GearRarity, { show: strin
     legendary: { show: ['Badge_Shield'] },
   },
   barbarian: {
-    common: { show: ['Barbarian_Round_Shield'] },
-    rare: { show: ['Barbarian_Round_Shield'] },
-    epic: { show: ['Barbarian_Round_Shield'] },
-    legendary: { show: ['Barbarian_Round_Shield'] },
+    common: { show: ['Round_Shield'] },
+    rare: { show: ['Rectangle_Shield'] },
+    epic: { show: ['Spike_Shield'] },
+    legendary: { show: ['Badge_Shield'] },
   },
   rogue: {
     common: { show: ['Throwable'] },
@@ -424,7 +356,6 @@ export const GEAR_ATTACHMENT_NAMES = [
   'Spellbook',
   'Spellbook_open',
   ...KNIGHT_SHIELDS,
-  'Barbarian_Round_Shield',
   'Throwable',
   'hand.l',
   'hand.r',
@@ -488,11 +419,11 @@ export const computeGearVisual = (
   if (armor) {
     const fullArmorGlb = resolveFullArmorGlb(armor.name)
     if (fullArmorGlb) {
-      fullArmor = fullArmorGlb
+      fullArmor = null // Disabled until full-character GLBs are ready
       if (characterId === 'knight') {
         hide.push(...KNIGHT_SHIELDS)
       } else if (characterId === 'barbarian') {
-        hide.push('Barbarian_Round_Shield')
+        hide.push(...KNIGHT_SHIELDS)
       }
     } else {
       const table = ARMOR_ATTACHMENTS[characterId]?.[armor.rarity]
@@ -505,14 +436,10 @@ export const computeGearVisual = (
         wardColor = RARITY_COLORS[armor.rarity]
       }
     }
-  } else {
-    const menuFullArmor: Record<string, string | null> = {
-      knight: '/items/knight-armor-full-ornamental.glb',
-      barbarian: '/items/barbarian-full-bark.glb',
-      rogue: '/items/rogue-full-pine.glb',
-      mage: '/items/mage-full-lava.glb',
-    }
-    fullArmor = menuFullArmor[characterId] ?? null
+  } else if (characterId === 'knight') {
+    show.push('Round_Shield')
+  } else if (characterId === 'barbarian') {
+    show.push('Round_Shield')
   }
 
   const boots = bestInSlot(gear, 'boots')
@@ -526,6 +453,8 @@ export const computeGearVisual = (
 
   return { show, hide, weaponNode, externalWeapon, wardColor, trinketColor, fullArmor }
 }
+import * as THREE from 'three'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
 /* ============================================================================
  * Gear visual pipeline — shared by menu, in-game, and loadout preview.
