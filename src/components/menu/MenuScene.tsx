@@ -177,6 +177,8 @@ const MenuHero = ({ id }: { id: CharacterId }) => {
         const matchedBones = new Set<string>()
         const unmatchedMeshes: string[] = []
 
+        console.log('[FullArmor] Loading', armorPath, 'available bones:', Array.from(bones.keys()))
+
         armorScene.traverse((child) => {
           if (!child.isMesh) return
 
