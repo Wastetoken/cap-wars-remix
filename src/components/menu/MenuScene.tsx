@@ -89,7 +89,7 @@ const MenuEnvMap = () => {
     const pmrem = new THREE.PMREMGenerator(gl)
     const tex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
     scene.environment = tex
-    scene.environmentIntensity = 0.25
+    scene.environmentIntensity = 0.4
     return () => {
       scene.environment = null
       tex.dispose()
@@ -148,16 +148,13 @@ const MenuHero = ({ id }: { id: CharacterId }) => {
 
   useEffect(() => {
     if (id !== 'knight') return
-    console.log('[MenuScene] Replacing knight materials, clone children:', clone.children.length)
     clone.traverse((obj) => {
       const mesh = obj as THREE.Mesh
       if (!mesh.isMesh) return
       const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
-      console.log('[MenuScene] Knight mesh:', mesh.name, 'materials:', materials.length, 'hasMap:', materials.some(m => !!(m as any).map))
       const newMaterials = materials.map((src) => {
         const tex = (src as THREE.MeshPhysicalMaterial).map
         const baseColor = src.color ? src.color.getHex() : 0xffffff
-        console.log('[MenuScene] Replacing material for', mesh.name, 'tex:', !!tex, 'color:', '#' + baseColor.toString(16))
         const replacement = new THREE.MeshStandardMaterial({
           map: tex,
           color: new THREE.Color(baseColor),

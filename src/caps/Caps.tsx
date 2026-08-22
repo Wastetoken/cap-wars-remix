@@ -188,11 +188,9 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
         mesh.receiveShadow = true
         if (selectedCharacter === 'knight') {
           const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
-          console.log('[Caps] Knight mesh:', mesh.name, 'materials:', materials.length, 'hasMap:', materials.some(m => !!(m as any).map))
           const newMaterials = materials.map((src) => {
             const tex = (src as THREE.MeshPhysicalMaterial).map
             const baseColor = src.color ? src.color.getHex() : 0xffffff
-            console.log('[Caps] Replacing material for', mesh.name, 'tex:', !!tex, 'color:', '#' + baseColor.toString(16))
             const replacement = new THREE.MeshStandardMaterial({
               map: tex,
               color: new THREE.Color(baseColor),

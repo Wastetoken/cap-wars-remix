@@ -25,7 +25,7 @@ export const PostProcessing = () => {
     if (postProcessingEnabled) {
       const center = vec2(0.5)
       const vignette = smoothstep(0., 0.5, oneMinus(length(screenUV.sub(center))).pow(2.))
-      const bloomResult = bloom(scenePassColor, 0.25, 0.6, 0.85)
+      const bloomResult = bloom(scenePassColor, 0.15, 0.6, 0.85)
       postProcessing.outputNode = smaa(scenePassColor.mul(vignette).add(bloomResult));
     } else {
       postProcessing.outputNode = scenePassColor;
