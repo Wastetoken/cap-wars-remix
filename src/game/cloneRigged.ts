@@ -32,12 +32,17 @@ export const cloneRigged = <T extends THREE.Object3D>(source: T): T => {
 
   clone.traverse((obj) => {
     const skinned = obj as THREE.SkinnedMesh
-    if (skinned.isSkinnedMesh) skinned.skeleton.pose()
+    if (skinned.isSkinnedMesh) {
+      skinned.skeleton.pose()
+    }
   })
   clone.updateMatrixWorld(true)
   clone.traverse((obj) => {
     const skinned = obj as THREE.SkinnedMesh
-    if (skinned.isSkinnedMesh) skinned.bind(skinned.skeleton)
+    if (skinned.isSkinnedMesh) {
+      skinned.bind(skinned.skeleton)
+      skinned.geometry.computeBoundingSphere()
+    }
   })
 
   return clone

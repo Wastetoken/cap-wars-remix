@@ -259,9 +259,6 @@ export function EnemyMesh({ entity, models }: EnemyMeshProps) {
       if (mesh.isMesh) {
         mesh.castShadow = true
         mesh.receiveShadow = true
-        // Skinned bounds go degenerate after the skeleton re-bind — without
-        // this the mesh can be frustum-culled while AI/damage keep running
-        mesh.frustumCulled = false
         // Clone material per instance so the hit flash is independent
         const mat = (mesh.material as THREE.MeshStandardMaterial).clone()
         mat.emissive = new THREE.Color('#FF7139')
