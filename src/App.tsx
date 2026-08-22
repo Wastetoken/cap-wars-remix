@@ -1,9 +1,11 @@
-import { Canvas } from '@react-three/fiber'
+import { Canvas, useThree } from '@react-three/fiber'
 import { Lights } from './components/lights'
 import { KeyboardControls, Preload } from '@react-three/drei'
 import { PostProcessing } from './components/postprocessing'
 import { Arena } from './components/arena'
 import { HalfFloatType } from 'three'
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
+import * as THREE from 'three'
 import { PlayerController } from './PlayerController'
 import { Particles } from './components/particles'
 import { Suspense, useEffect, Component, type ReactNode } from 'react'
@@ -198,6 +200,7 @@ function App() {
                 {/* Input + lights stay outside the model-loading Suspense so a slow
                     or failed GLB can never freeze player movement. */}
                 <Lights />
+                <EnvMap />
                 <KeyboardControls map={keyboardMap}>
                   <PlayerController />
                 </KeyboardControls>
@@ -241,6 +244,22 @@ function App() {
       <BootLoader />
     </>
   )
+}
+
+const EnvMap = () => {
+  const { gl, scene } = useThree()
+  useEffect(() => {
+    const pmrem = new THREE.PMREMGenerator(gl)
+    const tex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
+    scene.environment = tex
+    scene.environmentIntensity = 0.4
+    return () => {
+      scene.environment = null
+      tex.dispose()
+      pmrem.dispose()
+    }
+  }, [gl, scene])
+  return null
 }
 
 export default App
