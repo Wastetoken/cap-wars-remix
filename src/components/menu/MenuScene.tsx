@@ -151,10 +151,17 @@ const MenuHero = ({ id }: { id: CharacterId }) => {
     clone.traverse((obj) => {
       const mesh = obj as THREE.Mesh
       if (!mesh.isMesh) return
-      const mat = mesh.material as THREE.MeshPhysicalMaterial
-      if (mat.transmission !== undefined) mat.transmission = 0
-      if (mat.clearcoat !== undefined) mat.clearcoat = 0
-      mat.needsUpdate = true
+      const src = mesh.material as THREE.MeshPhysicalMaterial
+      const tex = src.map
+      const baseColor = src.color ? src.color.getHex() : 0xffffff
+      const replacement = new THREE.MeshStandardMaterial({
+        map: tex,
+        color: new THREE.Color(baseColor),
+        roughness: 0.7,
+        metalness: 0.1,
+      })
+      replacement.needsUpdate = true
+      mesh.material = replacement
     })
   }, [clone, id])
 

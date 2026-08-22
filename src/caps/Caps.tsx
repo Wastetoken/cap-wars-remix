@@ -187,10 +187,17 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
         mesh.castShadow = true
         mesh.receiveShadow = true
         if (selectedCharacter === 'knight') {
-          const mat = mesh.material as THREE.MeshPhysicalMaterial
-          if (mat.transmission !== undefined) mat.transmission = 0
-          if (mat.clearcoat !== undefined) mat.clearcoat = 0
-          mat.needsUpdate = true
+          const src = mesh.material as THREE.MeshPhysicalMaterial
+          const tex = src.map
+          const baseColor = src.color ? src.color.getHex() : 0xffffff
+          const replacement = new THREE.MeshStandardMaterial({
+            map: tex,
+            color: new THREE.Color(baseColor),
+            roughness: 0.7,
+            metalness: 0.1,
+          })
+          replacement.needsUpdate = true
+          mesh.material = replacement
         }
       }
       if (obj.name === charDef.weapon) {
