@@ -147,42 +147,6 @@ const MenuHero = ({ id }: { id: CharacterId }) => {
   }, [clone, id, charDef.weapon])
 
   useEffect(() => {
-    if (id !== 'knight') return
-    let count = 0
-    let hasMap = 0
-    clone.traverse((obj) => {
-      const mesh = obj as THREE.Mesh
-      if (!mesh.isMesh) return
-      count++
-      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
-      if (materials.some(m => !!(m as any).map)) hasMap++
-    })
-    console.log('[MenuScene] Knight meshes:', count, 'with texture:', hasMap)
-  }, [clone, id])
-
-  useEffect(() => {
-    if (id !== 'knight') return
-    clone.traverse((obj) => {
-      const mesh = obj as THREE.Mesh
-      if (!mesh.isMesh) return
-      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
-      materials.forEach((mat) => {
-        const physical = mat as THREE.MeshPhysicalMaterial
-        physical.transmission = 0
-        physical.clearcoat = 0
-        physical.clearcoatRoughness = 0
-        physical.sheen = 0
-        physical.sheenRoughness = 0
-        physical.anisotropy = 0
-        physical.anisotropyRotation = 0
-        physical.specularIntensity = 0.5
-        physical.ior = 1.5
-        mat.needsUpdate = true
-      })
-    })
-  }, [clone, id])
-
-  useEffect(() => {
     const stance = animations.find((c) => c.name === charDef.anims.stance)
     if (!stance) return
     const action = mixer.clipAction(stance)

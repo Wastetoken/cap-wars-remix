@@ -186,22 +186,6 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
       if (mesh.isMesh) {
         mesh.castShadow = true
         mesh.receiveShadow = true
-        if (selectedCharacter === 'knight') {
-          const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
-          materials.forEach((mat) => {
-            const physical = mat as THREE.MeshPhysicalMaterial
-            physical.transmission = 0
-            physical.clearcoat = 0
-            physical.clearcoatRoughness = 0
-            physical.sheen = 0
-            physical.sheenRoughness = 0
-            physical.anisotropy = 0
-            physical.anisotropyRotation = 0
-            physical.specularIntensity = 0.5
-            physical.ior = 1.5
-            mat.needsUpdate = true
-          })
-        }
       }
       if (obj.name === charDef.weapon) {
         mesh.material = createSwordMaterial(Array.isArray(mesh.material) ? undefined : mesh.material)
