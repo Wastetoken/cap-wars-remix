@@ -186,6 +186,12 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
       if (mesh.isMesh) {
         mesh.castShadow = true
         mesh.receiveShadow = true
+        if (selectedCharacter === 'knight') {
+          const mat = mesh.material as THREE.MeshPhysicalMaterial
+          if (mat.transmission !== undefined) mat.transmission = 0
+          if (mat.clearcoat !== undefined) mat.clearcoat = 0
+          mat.needsUpdate = true
+        }
       }
       if (obj.name === charDef.weapon) {
         mesh.material = createSwordMaterial(Array.isArray(mesh.material) ? undefined : mesh.material)
@@ -194,7 +200,7 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
       }
     })
     setWeapon(weaponNode)
-  }, [clone, charDef])
+  }, [clone, charDef, selectedCharacter])
 
   // Gear visuals — uses the shared pipeline so menu, game, and preview all match
   const [gearVisual, setGearVisual] = useState(() =>

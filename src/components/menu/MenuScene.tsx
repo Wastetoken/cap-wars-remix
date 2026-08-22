@@ -147,6 +147,18 @@ const MenuHero = ({ id }: { id: CharacterId }) => {
   }, [clone, id, charDef.weapon])
 
   useEffect(() => {
+    if (id !== 'knight') return
+    clone.traverse((obj) => {
+      const mesh = obj as THREE.Mesh
+      if (!mesh.isMesh) return
+      const mat = mesh.material as THREE.MeshPhysicalMaterial
+      if (mat.transmission !== undefined) mat.transmission = 0
+      if (mat.clearcoat !== undefined) mat.clearcoat = 0
+      mat.needsUpdate = true
+    })
+  }, [clone, id])
+
+  useEffect(() => {
     const stance = animations.find((c) => c.name === charDef.anims.stance)
     if (!stance) return
     const action = mixer.clipAction(stance)
