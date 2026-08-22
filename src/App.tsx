@@ -35,7 +35,6 @@ import { ReplayHUD } from './replay/ReplayHUD'
 import { BootLoader } from './components/hud/BootLoader'
 import { useGameStore } from './store'
 import { detectTouch } from './game/touch'
-import { useThree } from '@react-three/fiber'
 import { installDiag, postDiag } from './diag'
 
 /** Exposes the R3F scene + renderer as window.__scene / window.__renderer for
