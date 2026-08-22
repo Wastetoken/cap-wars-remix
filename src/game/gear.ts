@@ -460,6 +460,7 @@ export const computeGearVisual = (
 }
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
 
 /* ============================================================================
  * Gear visual pipeline — shared by menu, in-game, and loadout preview.
@@ -547,6 +548,9 @@ export const applyGearVisuals = (
     })
 
     const loader = new GLTFLoader()
+    const dracoLoader = new DRACOLoader()
+    dracoLoader.setDecoderPath('node_modules/three/examples/jsm/libs/draco/')
+    loader.setDRACOLoader(dracoLoader)
     
     // Dual-wield support for rogue / barbarian - load two weapons
     
