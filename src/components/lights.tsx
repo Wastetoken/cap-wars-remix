@@ -5,13 +5,13 @@ import { useGameStore } from "../store";
 import { LEVELS } from "@/game/levels";
 
 export const Lights = () => {
-  const shadowCameraSize = 100;
+  const shadowCameraSize = 18;
   const directionalLight = useRef<DirectionalLight>(null!)
 
   const currentLevel = useGameStore((s) => s.currentLevel)
   const levelConfig = LEVELS[currentLevel] ?? LEVELS[0]
   const shadows = useGameStore((s) => s.settings.shadows)
-  const shadowMapSize = shadows === 'high' ? 2048 : 512
+  const shadowMapSize = shadows === 'high' ? 1024 : 512
 
   useFrame(() => {
 

@@ -510,8 +510,10 @@ export function EnemyMesh({ entity, models }: EnemyMeshProps) {
     if (materialsRef.current.length > 0) {
       hitValue.current = damp(hitValue.current, 0, 7, delta)
       const intensity = hitValue.current * 3
-      for (const mat of materialsRef.current) {
-        mat.emissiveIntensity = intensity
+      if (intensity > 0.01) {
+        for (let i = 0; i < materialsRef.current.length; i++) {
+          materialsRef.current[i].emissiveIntensity = intensity
+        }
       }
     }
 
