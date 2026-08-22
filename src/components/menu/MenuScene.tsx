@@ -162,37 +162,23 @@ const MenuHero = ({ id }: { id: CharacterId }) => {
 
   useEffect(() => {
     if (id !== 'knight') return
-    let count = 0
-    let hasMap = 0
-    clone.traverse((obj) => {
-      const mesh = obj as THREE.Mesh
-      if (!mesh.isMesh) return
-      count++
-      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
-      if (materials.some(m => !!(m as any).map)) hasMap++
-    })
-    console.log('[MenuScene] Knight meshes:', count, 'with texture:', hasMap)
-  }, [clone, id])
-
-  useEffect(() => {
-    if (id !== 'knight') return
     clone.traverse((obj) => {
       const mesh = obj as THREE.Mesh
       if (!mesh.isMesh) return
       const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
-      const newMaterials = materials.map((src) => {
-        const tex = (src as THREE.MeshPhysicalMaterial).map
-        const baseColor = src.color ? src.color.getHex() : 0xffffff
-        const replacement = new THREE.MeshStandardMaterial({
-          map: tex,
-          color: new THREE.Color(baseColor),
-          roughness: 0.7,
-          metalness: 0.1,
-        })
-        replacement.needsUpdate = true
-        return replacement
+      materials.forEach((mat) => {
+        const physical = mat as THREE.MeshPhysicalMaterial
+        physical.transmission = 0
+        physical.clearcoat = 0
+        physical.clearcoatRoughness = 0
+        physical.sheen = 0
+        physical.sheenRoughness = 0
+        physical.anisotropy = 0
+        physical.anisotropyRotation = 0
+        physical.specularIntensity = 0.5
+        physical.ior = 1.5
+        mat.needsUpdate = true
       })
-      mesh.material = newMaterials.length === 1 ? newMaterials[0] : newMaterials
     })
   }, [clone, id])
 
