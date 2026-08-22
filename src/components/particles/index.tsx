@@ -5,6 +5,7 @@ import { Mobility } from './mobility'
 import { Rift } from './rift'
 import { Slash } from './slash'
 import { Spawn } from './spawn'
+import { Vortex } from './vortex'
 import { BoxGeometry } from 'three'
 import { useVFXEmitter as useVFXEmitterOriginal, VFXEmitter as VFXEmitterOriginal } from 'r3f-vfx'
 import type { VFXEmitterProps as VFXEmitterPropsOriginal } from 'r3f-vfx'
@@ -30,6 +31,7 @@ export const PARTICLES = {
   IMPACT_FLARE: 'impact-flare',
   SPAWN: 'spawn',
   RIFT: 'rift',
+  VORTEX: 'vortex',
   DEATH: 'death',
   DEATH_2: 'death-2',
   ENERGY: 'energy',
@@ -83,6 +85,8 @@ export const Particles = () => {
       <EnemyDeath />
       <Energy />
       <Bullets />
+      <Vortex />
+      <VortexSparks />
     </>
   )
 }

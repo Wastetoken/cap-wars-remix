@@ -11,6 +11,7 @@ import { slashSparksName } from '../components/particles/slash'
 import type { CapsHandle } from './types'
 import { createSwordMaterial, swordGlowColor, swordRarityColor, swordRarityLevel } from './materials'
 import { slashColorBase, slashColorGlow } from '../components/particles/slash'
+import { vortexSparksName, Vortex, VortexSparks } from '../components/particles/vortex'
 import { useCapsController } from './useCapsController'
 import { registerRig, unregisterRig, PLAYER_RIG_ID } from '@/replay/rigRegistry'
 import { Energy } from '@/components/particles/energy'
@@ -89,10 +90,16 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
   const sparkEmitterRef = useRef<{ emit: (overrides?: Record<string, unknown>) => void } | null>(
     null
   )
+  const vortexEmitterRef = useRef<{ emit: (overrides?: Record<string, unknown>) => void } | null>(
+    null
+  )
   // One emitter per class pool, mounted permanently. Routing the shared
-  // sparkEmitterRef to the current class avoids keyed remounts, whose buffer
-  // disposal freezes the WebGPU canvas ("used in submit while destroyed").
+  // sparkEmitterRef to the current class's pool emitter avoids keyed remounts,
+  // whose buffer disposal freezes the WebGPU canvas ("used in submit while destroyed").
   const sparkEmitters = useRef<
+    Partial<Record<CharacterId, { emit: (overrides?: Record<string, unknown>) => void } | null>>
+  >({})
+  const vortexEmitters = useRef<
     Partial<Record<CharacterId, { emit: (overrides?: Record<string, unknown>) => void } | null>>
   >({})
 
@@ -104,6 +111,11 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
   // Route the shared sparkEmitterRef to the current class's pool emitter
   useEffect(() => {
     sparkEmitterRef.current = sparkEmitters.current[selectedCharacter] ?? null
+  }, [selectedCharacter])
+
+  // Route the shared vortexEmitterRef to the current class's pool emitter
+  useEffect(() => {
+    vortexEmitterRef.current = vortexEmitters.current[selectedCharacter] ?? null
   }, [selectedCharacter])
 
   // Apply the class's VFX identity to the live TSL uniforms (slash arc tint,
@@ -296,6 +308,7 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
     group,
     slashEmitterRef,
     sparkEmitterRef,
+    vortexEmitterRef,
     anims: charDef.anims,
     characterId: charDef.id,
     ranged: charDef.ranged ?? false,
@@ -345,6 +358,7 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
               emitCount={1}
             />
           ))}
+          <VortexSparks />
           <Energy />
           {DEBUG_HITBOX && (
             <mesh rotation={[0, 0, 0]}>
@@ -373,6 +387,8 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
           [0, 0],
         ]}
       />
+
+      <Vortex />
 
       <group ref={group} {...props} dispose={null} scale={charDef.scale}>
         <primitive object={clone} />

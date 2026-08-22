@@ -54,6 +54,7 @@ type UseCapsControllerProps = {
   group: React.RefObject<THREE.Group | null>
   slashEmitterRef: React.RefObject<{ emit: (overrides?: Record<string, unknown>) => void } | null>
   sparkEmitterRef: React.RefObject<{ emit: (overrides?: Record<string, unknown>) => void } | null>
+  vortexEmitterRef: React.RefObject<{ emit: (overrides?: Record<string, unknown>) => void } | null>
   anims: CharacterAnims
   characterId: CharacterId
   /** Ranged characters (mage) fire bolts instead of melee swings */
@@ -94,6 +95,7 @@ export const useCapsController = ({
   group,
   slashEmitterRef,
   sparkEmitterRef,
+  vortexEmitterRef,
   anims,
   characterId,
   ranged,
@@ -419,6 +421,10 @@ export const useCapsController = ({
       z: target.z,
       radius,
       durationMs: (def.impactDelay ?? 0.6) * 1000,
+    })
+
+    vortexEmitterRef.current?.emit({
+      position: [target.x, 0.1, target.z],
     })
 
     abilityState.current = {

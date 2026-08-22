@@ -254,6 +254,8 @@ export type ClassVfx = {
   ghost: { color: string; size: number; opacity: number }
   /** Mobility move: spark/wisp spray */
   sparks: { color: string; secondary: string; gravity: number }
+  /** Meteor vortex ribbon colors */
+  vortex: { base: string; glow: string }
 }
 
 export const CHARACTER_VFX: Record<CharacterId, ClassVfx> = {
@@ -264,6 +266,7 @@ export const CHARACTER_VFX: Record<CharacterId, ClassVfx> = {
     swordGlow: '#FF9C39',
     ghost: { color: '#dbeafe', size: 2.0, opacity: 0.55 },
     sparks: { color: '#fde68a', secondary: '#93c5fd', gravity: -0.7 },
+    vortex: { base: '#ff7a2a', glow: '#ffd28a' },
   },
   // Fire & embers — heavier ghost, embers that rise
   barbarian: {
@@ -272,6 +275,7 @@ export const CHARACTER_VFX: Record<CharacterId, ClassVfx> = {
     swordGlow: '#FF3D00',
     ghost: { color: '#ff7a2a', size: 2.35, opacity: 0.6 },
     sparks: { color: '#ffb35c', secondary: '#ff5a1a', gravity: 0.5 },
+    vortex: { base: '#ff5a1a', glow: '#ffd28a' },
   },
   // Shadow violet — sleeker ghost, wisps that drift upward
   rogue: {
@@ -280,6 +284,7 @@ export const CHARACTER_VFX: Record<CharacterId, ClassVfx> = {
     swordGlow: '#A855F7',
     ghost: { color: '#7c3aed', size: 1.7, opacity: 0.5 },
     sparks: { color: '#c4b5fd', secondary: '#6366f1', gravity: 0.6 },
+    vortex: { base: '#7c3aed', glow: '#c4b5fd' },
   },
   // Arcane cyan-violet — weightless motes, no gravity
   mage: {
@@ -288,5 +293,6 @@ export const CHARACTER_VFX: Record<CharacterId, ClassVfx> = {
     swordGlow: '#7DD3FC',
     ghost: { color: '#c4b5fd', size: 1.9, opacity: 0.55 },
     sparks: { color: '#e0e7ff', secondary: '#a78bfa', gravity: 0 },
+    vortex: { base: '#7dd3fc', glow: '#c4b5fd' },
   },
 }
