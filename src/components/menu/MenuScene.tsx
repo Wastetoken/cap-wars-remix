@@ -148,6 +148,34 @@ const MenuHero = ({ id }: { id: CharacterId }) => {
 
   useEffect(() => {
     if (id !== 'knight') return
+    let count = 0
+    let hasMap = 0
+    clone.traverse((obj) => {
+      const mesh = obj as THREE.Mesh
+      if (!mesh.isMesh) return
+      count++
+      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+      if (materials.some(m => !!(m as any).map)) hasMap++
+    })
+    console.log('[MenuScene] Knight meshes:', count, 'with texture:', hasMap)
+  }, [clone, id])
+
+  useEffect(() => {
+    if (id !== 'knight') return
+    let count = 0
+    let hasMap = 0
+    clone.traverse((obj) => {
+      const mesh = obj as THREE.Mesh
+      if (!mesh.isMesh) return
+      count++
+      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+      if (materials.some(m => !!(m as any).map)) hasMap++
+    })
+    console.log('[MenuScene] Knight meshes:', count, 'with texture:', hasMap)
+  }, [clone, id])
+
+  useEffect(() => {
+    if (id !== 'knight') return
     clone.traverse((obj) => {
       const mesh = obj as THREE.Mesh
       if (!mesh.isMesh) return
@@ -267,6 +295,7 @@ export const MenuScene = () => (
       gl={{ antialias: true }}
       onCreated={(s) => { (window as unknown as { __menu?: unknown }).__menu = s }}
     >
+      <MenuEnvMap />
       <ambientLight intensity={0.35} />
       <directionalLight
         position={[11, 8, 9]}
@@ -290,7 +319,6 @@ export const MenuScene = () => (
           <MenuHero key={id} id={id} />
         ))}
       </Suspense>
-      <MenuEnvMap />
       <CameraRig />
     </Canvas>
   </div>
