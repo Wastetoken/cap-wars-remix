@@ -8,6 +8,7 @@ import { CHARACTERS, CHARACTER_LIST, type CharacterId } from '@/game/characters'
 import { levelForSouls } from '@/game/progression'
 import { cloneRigged } from '@/game/cloneRigged'
 import { applyMenuHeroGear } from '@/game/gear'
+import { mergeKnightWithLegacyRig } from '@/game/mergeKnightRig'
 import mainMenuUrl from '@/main-menu.glb?url'
 
 // ============================================================================
@@ -133,8 +134,15 @@ const MenuHero = ({ id }: { id: CharacterId }) => {
   const souls = useGameStore((s) => s.characterSouls[id] ?? 0)
   const heroLevel = levelForSouls(souls)
   const charDef = CHARACTERS[id]
-  const { scene, animations } = useGLTF(charDef.model + '?menu')
-  const clone = useMemo(() => cloneRigged(scene), [scene])
+  const { scene: newScene } = useGLTF(charDef.model + '?menu')
+  const { scene: legacyScene } = useGLTF('/character/Knight_legacy.glb?menu-rig')
+  const { clone, animations } = useMemo(() => {
+    if (id === 'knight') {
+      return mergeKnightWithLegacyRig(newScene, legacyScene)
+    }
+    const cloned = cloneRigged(newScene)
+    return { clone: cloned, animations: newScene.animations }
+  }, [newScene, legacyScene, id])
   const mixer = useMemo(() => new THREE.AnimationMixer(clone), [clone])
   const group = useRef<THREE.Group>(null)
   const ring = useRef<THREE.Mesh>(null)

@@ -16,6 +16,7 @@ import { registerRig, unregisterRig, PLAYER_RIG_ID } from '@/replay/rigRegistry'
 import { Energy } from '@/components/particles/energy'
 import { applyInGameGear, computeGearVisual, bestGearRarity, RARITY_COLORS } from '@/game/gear'
 import { CHARACTERS, CHARACTER_LIST, CHARACTER_VFX, type CharacterId } from '@/game/characters'
+import { mergeKnightWithLegacyRig } from '@/game/mergeKnightRig'
 import { createEnergyRingMaterial } from '@/components/vfx/energy'
 
 // Debug flag for hitbox visualization
@@ -129,8 +130,16 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
   const worldQuat = useMemo(() => new THREE.Quaternion(), [])
 
   // GLTF — load the selected character's model
-  const { scene, animations } = useGLTF(charDef.model)
-  const clone = useMemo(() => cloneRigged(scene), [scene])
+  const { scene: newScene } = useGLTF(charDef.model)
+  const { scene: legacyScene } = useGLTF('/character/Knight_legacy.glb?rig')
+
+  const { clone, animations } = useMemo(() => {
+    if (selectedCharacter === 'knight') {
+      return mergeKnightWithLegacyRig(newScene, legacyScene)
+    }
+    const cloned = cloneRigged(newScene)
+    return { clone: cloned, animations: newScene.animations }
+  }, [newScene, legacyScene, selectedCharacter])
 
   // ---------------------------------------------------------------------------
   // MANUAL ANIMATION SETUP — bypasses drei v11 alpha useAnimations ref bug.
