@@ -29,7 +29,7 @@ type GLTFResult = ReturnType<typeof useGLTF> & {
   nodes: { Ribbon: { geometry: THREE.BufferGeometry } }
 }
 
-const Vortex = () => {
+export const Vortex = () => {
   const { nodes } = useGLTF('/vfx/ribbon.glb') as GLTFResult
 
   const vortexNodes = ({ progress }: { progress: any }) => {
