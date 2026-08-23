@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { MeshBasicNodeMaterial } from 'three/webgpu'
 import {
   uv,
   vec2,
@@ -13,7 +14,6 @@ import {
   uniform,
   positionLocal,
   normalWorld,
-  MeshBasicNodeMaterial,
 } from 'three/tsl'
 import { noiseTexture } from '../textures/noiseTexture'
 import { useGLTF } from '@react-three/drei'
