@@ -38,6 +38,8 @@ export default defineConfig({
     'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || ''),
   },
   server: {
+    host: true,
+    allowedHosts: true,
     watch: {
       // Native chokidar events keep dying on this Windows machine (stale
       // modules served after edits). Polling is slightly heavier but reliable.
