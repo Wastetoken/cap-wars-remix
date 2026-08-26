@@ -49,7 +49,7 @@ export const Bullets = () => {
         name={PARTICLES.BULLET_ENERGY}
         autoStart={false}
         geometry={new SphereGeometry(0.5, 16, 12)}
-        maxParticles={10000}
+        maxParticles={2000}
         intensity={7}
         size={[0.02, 0.08]}
         colorStart={['#ff2600', '#010101']}

@@ -2,7 +2,7 @@ import { Vector3, Quaternion, type Mesh } from "three";
 import { create } from "zustand";
 import {
     loadSave,
-    persistSave,
+    persistSaveDebounced,
     awardSoulsRPC,
     prereqMet,
     maxHealthBonus,
@@ -377,12 +377,12 @@ export const useGameStore = create<GameState>((set, get) => {
                 })
                 eventBus.emit(EVENTS.LEVEL_UP, newLevel)
                 eventBus.emit(EVENTS.ANNOUNCE, `Level ${newLevel}`, `+${levelsGained} talent point${levelsGained > 1 ? 's' : ''} — press TAB`)
-                persistSave(s.selectedCharacter, s.characterSkills, characterSouls, characterTalentPoints, persistUserId)
+                persistSaveDebounced(s.selectedCharacter, s.characterSkills, characterSouls, characterTalentPoints, persistUserId)
                 void callAwardRpc()
                 return
             }
             set({ souls: next, characterSouls })
-            persistSave(s.selectedCharacter, s.characterSkills, characterSouls, s.characterTalentPoints, persistUserId)
+            persistSaveDebounced(s.selectedCharacter, s.characterSkills, characterSouls, s.characterTalentPoints, persistUserId)
             void callAwardRpc()
         },
 
@@ -405,7 +405,7 @@ export const useGameStore = create<GameState>((set, get) => {
                 playerMaxHealth: newMaxHealth,
                 playerHealth: newMaxHealth,
             })
-            persistSave(character, s.characterSkills, s.characterSouls, s.characterTalentPoints, s.authUser?.id)
+            persistSaveDebounced(character, s.characterSkills, s.characterSouls, s.characterTalentPoints, s.authUser?.id)
         },
 
         // Talents (1 point per rank, parent prerequisite)
@@ -431,7 +431,7 @@ export const useGameStore = create<GameState>((set, get) => {
                 playerHealth: healthGain > 0 ? s.playerHealth + healthGain : s.playerHealth,
                 characterSkills,
             })
-            persistSave(s.selectedCharacter, characterSkills, s.characterSouls, characterTalentPoints, s.authUser?.id)
+                persistSaveDebounced(s.selectedCharacter, characterSkills, s.characterSouls, characterTalentPoints, s.authUser?.id)
             eventBus.emit(EVENTS.TALENT_BUY, true)
             return true
         },
@@ -549,7 +549,7 @@ export const useGameStore = create<GameState>((set, get) => {
                 selectedCharacter: saveData.selectedCharacter
             })
             const s = get()
-            persistSave(s.selectedCharacter, s.characterSkills, s.characterSouls, s.characterTalentPoints, s.authUser?.id)
+            persistSaveDebounced(s.selectedCharacter, s.characterSkills, s.characterSouls, s.characterTalentPoints, s.authUser?.id)
         },
         updateSettings: (patch) => {
             const next = { ...get().settings, ...patch }

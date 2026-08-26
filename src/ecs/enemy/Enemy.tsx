@@ -252,16 +252,18 @@ export function EnemyMesh({ entity, models }: EnemyMeshProps) {
     const mats: THREE.MeshStandardMaterial[] = []
 
     clone.traverse((obj) => {
-      // Hide weapon attachments not in the show list
-      if (def.hide.includes(obj.name)) obj.visible = false
+      if (def.hide.includes(obj.name)) {
+        obj.visible = false
+        return
+      }
       if (showSet.has(obj.name)) obj.visible = true
 
       const mesh = obj as THREE.Mesh
       if (mesh.isMesh) {
         mesh.castShadow = true
         mesh.receiveShadow = true
-        // Clone material per instance so the hit flash is independent
-        const mat = (mesh.material as THREE.MeshStandardMaterial).clone()
+        const src = mesh.material as THREE.MeshStandardMaterial
+        const mat = src.clone()
         mat.emissive = new THREE.Color('#FF7139')
         mat.emissiveIntensity = 0
         mesh.material = mat

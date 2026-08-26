@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import { MeshBasicNodeMaterial } from 'three/webgpu'
 import {
   uv,
   vec2,
@@ -7,14 +6,12 @@ import {
   smoothstep,
   mix,
   texture,
-  color,
   float,
   screenUV,
   viewportSharedTexture,
   uniform,
   positionLocal,
-  normalWorld,
-  atan2,
+  atan,
 } from 'three/tsl'
 import { noiseTexture } from '../textures/noiseTexture'
 import { useGLTF } from '@react-three/drei'
@@ -50,7 +47,7 @@ export const Vortex = () => {
     const center = vec2(0.5, 0.5)
     const uvFromCenter = uv().sub(center)
     const dist = uvFromCenter.length()
-    const angle = atan2(uvFromCenter.y, uvFromCenter.x)
+    const angle = atan(uvFromCenter.y, uvFromCenter.x)
     const swirlSpeed = float(4.0).add(dist.mul(6.0))
     const swirlAngle = angle.add(progress.mul(swirlSpeed.mul(6.28)))
     const swirlUv = vec2(
@@ -146,7 +143,7 @@ export const VortexSparks = () => {
           key={id}
           curveTexturePath="./vfx/slash-sparks.bin"
           name={vortexSparksName(id)}
-          maxParticles={800}
+          maxParticles={300}
           position={[0, 0, 0]}
           autoStart={false}
           intensity={30}

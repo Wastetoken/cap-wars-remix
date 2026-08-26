@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, memo } from 'react'
 import { useGLTF } from '@react-three/drei'
 import { SkeletonUtils } from 'three-stdlib'
 import * as THREE from 'three'
@@ -114,7 +114,7 @@ const prepClone = (scene: THREE.Group) => {
   return c
 }
 
-const Piece = ({
+const Piece = memo(({
   scene,
   placement,
 }: {
@@ -123,14 +123,15 @@ const Piece = ({
 }) => {
   const obj = useMemo(() => prepClone(scene), [scene])
   return (
-    <primitive
-      object={obj}
-      position={placement.position}
-      rotation={[0, placement.rotationY ?? 0, 0]}
-      dispose={null}
-    />
-  )
-}
+      <primitive
+        object={obj}
+        position={placement.position}
+        rotation={[0, placement.rotationY ?? 0, 0]}
+        dispose={null}
+      />
+    )
+  })
+})
 
 // ---------------------------------------------------------------------------
 // Arena

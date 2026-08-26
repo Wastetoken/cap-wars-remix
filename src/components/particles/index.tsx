@@ -13,6 +13,8 @@ import { Bullets } from './bullets'
 import { particleScale } from '@/game/skills'
 import { useGameStore } from '@/store'
 
+import { memo, useMemo } from 'react'
+
 export const PARTICLES = {
   SLASH: 'slash',
   SPARKS: 'sparks',
@@ -46,10 +48,13 @@ export type ParticleType = (typeof PARTICLES)[keyof typeof PARTICLES]
  * const { start, stop, emit } = useVFXEmitter(PARTICLES.ENERGY)
  */
 export const useVFXEmitter = (name: ParticleType) => {
+  const scale = useMemo(() => {
+    const s = useGameStore.getState().settings
+    return particleScale(s)
+  }, [])
   const api = useVFXEmitterOriginal(name)
   const scaleCount = (count?: number) => {
     if (count === undefined) return count
-    const scale = particleScale(useGameStore.getState().settings)
     return Math.max(1, Math.round(count * scale))
   }
   return {
@@ -74,7 +79,7 @@ export const VFXEmitter = VFXEmitterOriginal as React.ForwardRefExoticComponent<
   VFXEmitterProps & React.RefAttributes<{ emit: (overrides?: Record<string, unknown>) => void }>
 >
 
-export const Particles = () => {
+export const Particles = memo(() => {
   return (
     <>
       <Slash />
@@ -89,4 +94,4 @@ export const Particles = () => {
       <VortexSparks />
     </>
   )
-}
+})

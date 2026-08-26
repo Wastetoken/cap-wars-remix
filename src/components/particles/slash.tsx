@@ -182,7 +182,7 @@ export const Slash = () => {
           key={id}
           curveTexturePath="./vfx/slash-sparks.bin"
           name={slashSparksName(id)}
-          maxParticles={1000}
+          maxParticles={400}
           position={[0, 0, 0]}
           autoStart={false}
           intensity={40}

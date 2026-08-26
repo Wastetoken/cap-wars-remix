@@ -243,7 +243,7 @@ export const fetchCloudSave = async (userId: string): Promise<SaveData | null> =
     .from('saves')
     .select('save_data')
     .eq('user_id', userId)
-    .single()
+    .maybeSingle()
   
   if (error || !data) return null
   
@@ -274,7 +274,7 @@ export type GameSettings = {
   cameraShake: boolean
   shadows: 'high' | 'low' | 'off'
   particles: 'full' | 'reduced'
-  postProcessing: boolean
+  postProcessing: 'off' | 'low' | 'high'
   musicVolume: number
   sfxVolume: number
 }
@@ -283,16 +283,33 @@ export const DEFAULT_SETTINGS: GameSettings = {
   cameraShake: true,
   shadows: 'high',
   particles: 'full',
-  postProcessing: true,
+  postProcessing: 'high',
   musicVolume: 0.55,
   sfxVolume: 0.85,
 }
 
 const SETTINGS_KEY = 'caps-wars-settings'
+const SAVE_KEY = 'caps-wars-save'
 
 const isMobileDevice = () =>
   typeof window !== 'undefined' &&
   (window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(max-width: 1024px)').matches)
+
+let persistTimer: ReturnType<typeof setTimeout> | null = null
+
+export const persistSaveDebounced = (
+  character: string,
+  characterSkills: Record<string, any>,
+  characterSouls: Record<string, number>,
+  characterTalentPoints: Record<string, number>,
+  userId?: string
+) => {
+  if (persistTimer) window.clearTimeout(persistTimer)
+  persistTimer = window.setTimeout(() => {
+    persistSave(character, characterSkills, characterSouls, characterTalentPoints, userId)
+    persistTimer = null
+  }, 800)
+}
 
 export const loadSettings = (): GameSettings => {
   try {
@@ -301,7 +318,7 @@ export const loadSettings = (): GameSettings => {
       const saved = JSON.parse(raw) as Partial<GameSettings>
       const merged = { ...DEFAULT_SETTINGS, ...saved }
       if (saved.postProcessing !== undefined) return merged
-      return { ...merged, postProcessing: !isMobileDevice() }
+      return { ...merged, postProcessing: !isMobileDevice() ? 'high' : 'low' as const }
     }
   } catch {
     // fall through to defaults
@@ -310,7 +327,7 @@ export const loadSettings = (): GameSettings => {
     ...DEFAULT_SETTINGS,
     shadows: isMobileDevice() ? 'off' : 'high',
     particles: isMobileDevice() ? 'reduced' : 'full',
-    postProcessing: !isMobileDevice(),
+    postProcessing: !isMobileDevice() ? 'high' : 'low',
   }
 }
 

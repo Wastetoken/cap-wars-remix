@@ -501,8 +501,9 @@ const SettingsMenu = () => {
             label="Post-processing"
             settingKey="postProcessing"
             options={[
-              { value: true, label: 'On' },
-              { value: false, label: 'Off' },
+              { value: 'high', label: 'High' },
+              { value: 'low', label: 'Low' },
+              { value: 'off', label: 'Off' },
             ]}
           />
         </div>

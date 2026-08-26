@@ -8,7 +8,7 @@ import { useGameStore } from "@/store";
 
 export const PostProcessing = () => {
   const { renderer, scene, camera } = useThree();
-  const postProcessingEnabled = useGameStore((s) => s.settings.postProcessing)
+  const postProcessingQuality = useGameStore((s) => s.settings.postProcessing)
 
   const postProcessingRef = useRef<THREE.PostProcessing>(null);
 
@@ -22,11 +22,14 @@ export const PostProcessing = () => {
 
     const postProcessing = new THREE.PostProcessing(renderer);
 
-    if (postProcessingEnabled) {
+    if (postProcessingQuality !== 'off') {
       const center = vec2(0.5)
       const vignette = smoothstep(0., 0.5, oneMinus(length(screenUV.sub(center))).pow(2.))
       const bloomResult = bloom(scenePassColor, 0.15, 0.6, 0.85)
-      postProcessing.outputNode = smaa(scenePassColor.mul(vignette).add(bloomResult));
+      const withBloom = scenePassColor.mul(vignette).add(bloomResult)
+      postProcessing.outputNode = postProcessingQuality === 'high'
+        ? smaa(withBloom)
+        : withBloom
     } else {
       postProcessing.outputNode = scenePassColor;
     }
@@ -36,7 +39,7 @@ export const PostProcessing = () => {
     return () => {
       postProcessingRef.current = null;
     };
-  }, [renderer, scene, camera, postProcessingEnabled]);
+  }, [renderer, scene, camera, postProcessingQuality]);
 
   useFrame(() => {
     if (postProcessingRef.current) {

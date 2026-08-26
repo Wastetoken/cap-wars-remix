@@ -1,6 +1,72 @@
 import { create } from 'zustand'
 
 // ============================================================================
+// Spatial Hash Grid — broad phase for collision detection
+// ============================================================================
+
+const CELL_SIZE = 2
+const spatialCells = new Map<number, Collider[]>()
+let gridDirty = true
+let lastRebuild = 0
+
+function hashCell(cx: number, cz: number): number {
+  return cx * 73856093 ^ cz * 19349663
+}
+
+function rebuildSpatialGrid() {
+  spatialCells.clear()
+  const colliders = useCollisionStore.getState().getColliders()
+  for (const c of colliders) {
+    const minX = Math.floor((c.x - c.radius) / CELL_SIZE)
+    const maxX = Math.floor((c.x + c.radius) / CELL_SIZE)
+    const minZ = Math.floor((c.z - c.radius) / CELL_SIZE)
+    const maxZ = Math.floor((c.z + c.radius) / CELL_SIZE)
+    for (let cx = minX; cx <= maxX; cx++) {
+      for (let cz = minZ; cz <= maxZ; cz++) {
+        const key = hashCell(cx, cz)
+        if (!spatialCells.has(key)) spatialCells.set(key, [])
+        spatialCells.get(key)!.push(c)
+      }
+    }
+  }
+  gridDirty = false
+  lastRebuild = performance.now()
+}
+
+export function markSpatialGridDirty() {
+  gridDirty = true
+}
+
+function querySpatialGrid(x: number, z: number, radius: number): Collider[] {
+  const now = performance.now()
+  if (gridDirty || now - lastRebuild > 20) {
+    rebuildSpatialGrid()
+  }
+  const result: Collider[] = []
+  const seen = new Set<string>()
+  const buffer = CELL_SIZE
+  const minX = Math.floor((x - radius - buffer) / CELL_SIZE)
+  const maxX = Math.floor((x + radius + buffer) / CELL_SIZE)
+  const minZ = Math.floor((z - radius - buffer) / CELL_SIZE)
+  const maxZ = Math.floor((z + radius + buffer) / CELL_SIZE)
+  for (let cx = minX; cx <= maxX; cx++) {
+    for (let cz = minZ; cz <= maxZ; cz++) {
+      const key = hashCell(cx, cz)
+      const cell = spatialCells.get(key)
+      if (cell) {
+        for (const c of cell) {
+          if (!seen.has(c.id)) {
+            seen.add(c.id)
+            result.push(c)
+          }
+        }
+      }
+    }
+  }
+  return result
+}
+
+// ============================================================================
 // Collision Layers
 // ============================================================================
 
@@ -47,6 +113,7 @@ export const useCollisionStore = create<CollisionStore>((set, get) => ({
       newMap.set(collider.id, collider)
       return { colliders: newMap }
     })
+    markSpatialGridDirty()
   },
 
   unregisterCollider: (id) => {
@@ -55,6 +122,7 @@ export const useCollisionStore = create<CollisionStore>((set, get) => ({
       newMap.delete(id)
       return { colliders: newMap }
     })
+    markSpatialGridDirty()
   },
 
   updateCollider: (id, x, z) => {
@@ -106,16 +174,13 @@ export const checkCircleCollision = (
   myId: string,
   myLayer: LayerType
 ): { hit: boolean; pushX: number; pushZ: number } => {
-  // Iterate the live collider Map directly — no Array.from allocation.
-  // This runs once per enemy per frame; the old copy caused GC thrash on
-  // mobile as enemy counts grew across levels.
-  const colliders = useCollisionStore.getState().getColliderMap()
+  const candidates = querySpatialGrid(x, z, radius)
 
   let totalPushX = 0
   let totalPushZ = 0
   let hasHit = false
 
-  for (const other of colliders.values()) {
+  for (const other of candidates) {
     if (other.id === myId) continue
     if (!other.solid) continue
     if (!shouldCollide(myLayer, other.layer)) continue
@@ -130,7 +195,6 @@ export const checkCircleCollision = (
       const dist = Math.sqrt(distSq)
       const overlap = minDist - dist
 
-      // Push direction (normalized)
       const nx = dx / dist
       const nz = dz / dist
 
@@ -185,10 +249,10 @@ export const checkHitbox = (
   targetLayer: LayerType,
   excludeId?: string
 ): HitResult[] => {
-  const colliders = useCollisionStore.getState().getColliderMap()
+  const candidates = querySpatialGrid(x, z, radius)
   const hits: HitResult[] = []
 
-  for (const other of colliders.values()) {
+  for (const other of candidates) {
     if (other.id === excludeId) continue
     if (other.layer !== targetLayer) continue
 
@@ -206,7 +270,10 @@ export const checkHitbox = (
     }
   }
 
-  // Sort by distance (closest first)
+  return hits.sort((a, b) => a.distance - b.distance)
+}
+  }
+
   return hits.sort((a, b) => a.distance - b.distance)
 }
 

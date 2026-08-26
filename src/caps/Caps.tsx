@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { useRef, useEffect, useImperativeHandle, forwardRef, useMemo, useState } from 'react'
+import { useRef, useEffect, useImperativeHandle, forwardRef, useMemo, useState, memo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import { GLTFLoader } from 'three-stdlib'
@@ -77,7 +77,7 @@ const WardRing = ({ color }: { color: string }) => {
   )
 }
 
-export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
+export const Caps = memo(forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
   // Refs
   const group = useRef<THREE.Group>(null)
   const swordRef2 = useRef<THREE.Group>(null)
@@ -389,7 +389,7 @@ export const Caps = forwardRef<CapsHandle, CapsProps>(({ ...props }, ref) => {
       </group>
     </>
   )
-})
+}))
 
 // Preload all character models
 useGLTF.preload('/character/Knight.glb')

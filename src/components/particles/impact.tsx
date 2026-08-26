@@ -1,11 +1,11 @@
 import { VFXParticles } from 'r3f-vfx'
-import { SphereGeometry } from 'three/webgpu'
-import { TextureLoader } from 'three/webgpu'
+import { SphereGeometry, TextureLoader } from 'three/webgpu'
+import { useMemo } from 'react'
 import { texture, uv, vec4 } from 'three/tsl'
 import { PARTICLES } from './index'
 
 export const Impact = () => {
-  const flareTexture = new TextureLoader().load('/flare.png')
+  const flareTexture = useMemo(() => new TextureLoader().load('/flare.png'), [])
   return (
     <>
       <VFXParticles
