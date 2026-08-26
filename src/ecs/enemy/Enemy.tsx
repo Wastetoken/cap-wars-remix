@@ -156,6 +156,7 @@ export function EnemyMesh({ entity, models }: EnemyMeshProps) {
   // Temp objects for staff-tip world transform (avoid GC)
   const tmpTip = useMemo(() => new THREE.Vector3(), [])
   const tmpQuat = useMemo(() => new THREE.Quaternion(), [])
+  const tmpParentQuat = useMemo(() => new THREE.Quaternion(), [])
 
   const playLocomotion = useCallback(
     (name: string) => {
@@ -547,8 +548,8 @@ export function EnemyMesh({ entity, models }: EnemyMeshProps) {
       tmpTip.copy(STAFF_TIP_LOCAL).applyMatrix4(staffObj.current.matrixWorld)
       staffTipRef.current.position.copy(staffTipRef.current.parent!.worldToLocal(tmpTip))
       staffObj.current.getWorldQuaternion(tmpQuat)
-      const parentQuat = staffTipRef.current.parent!.getWorldQuaternion(new THREE.Quaternion())
-      staffTipRef.current.quaternion.copy(parentQuat.invert().multiply(tmpQuat))
+      staffTipRef.current.parent!.getWorldQuaternion(tmpParentQuat)
+      staffTipRef.current.quaternion.copy(tmpParentQuat.invert().multiply(tmpQuat))
     }
 
     // Handle charging sequence for range enemies (frozen with the game)

@@ -19,7 +19,7 @@ import { bossBrainSystem } from './bossBrain'
 import { damp } from 'three/src/math/MathUtils.js'
 import { eventBus, EVENTS } from '@/constants'
 import { useGameStore, isGameFrozen } from '@/store'
-import { checkCircleCollision, Layer } from '@/collision'
+import { Layer, useCollisionStore, shouldCollide } from '@/collision'
 import { ARENA_BOUND } from '@/constants'
 import { MOBS, type MobType } from '@/game/mobs'
 import { getIcePatches, ICE_PATCH_RADIUS, ICE_SLOW_AMOUNT } from '@/components/iceFloor'
@@ -283,25 +283,45 @@ export function stunDecaySystem(world: World, delta: number) {
 const ENEMY_COLLISION_RADIUS = 0.5
 
 export function enemyCollisionSystem(world: World) {
+  // Fetch the live collider Map ONCE per frame and inline the separation
+  // check. The old code called checkCircleCollision per enemy, which each
+  // allocated a result object AND re-read the store — N allocations/frame
+  // that grew with enemy count (later levels) and thrashed the GC on
+  // mobile (heat + jank). Inlining keeps this hot path allocation-free.
+  const colliders = useCollisionStore.getState().getColliderMap()
+
   world.query(IsEnemy, Position).forEach((entity) => {
     const pos = entity.get(Position)!
-    const colliderId = `enemy-${entity.id()}`
+    const myId = `enemy-${entity.id()}`
 
-    // Check collision with other enemies
-    const collision = checkCircleCollision(
-      pos.x,
-      pos.z,
-      ENEMY_COLLISION_RADIUS,
-      colliderId,
-      Layer.ENEMY
-    )
+    let totalPushX = 0
+    let totalPushZ = 0
+    let hasHit = false
 
-    // Apply collision pushback if overlapping
-    if (collision.hit) {
+    for (const other of colliders.values()) {
+      if (other.id === myId) continue
+      if (!other.solid) continue
+      if (!shouldCollide(Layer.ENEMY, other.layer)) continue
+
+      const dx = pos.x - other.x
+      const dz = pos.z - other.z
+      const distSq = dx * dx + dz * dz
+      const minDist = ENEMY_COLLISION_RADIUS + other.radius
+
+      if (distSq < minDist * minDist && distSq > 0.0001) {
+        hasHit = true
+        const dist = Math.sqrt(distSq)
+        const overlap = minDist - dist
+        totalPushX += (dx / dist) * overlap
+        totalPushZ += (dz / dist) * overlap
+      }
+    }
+
+    if (hasHit) {
       entity.set(Position, {
-        x: pos.x + collision.pushX,
+        x: pos.x + totalPushX,
         y: pos.y,
-        z: pos.z + collision.pushZ,
+        z: pos.z + totalPushZ,
       })
     }
   })
