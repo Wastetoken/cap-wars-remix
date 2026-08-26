@@ -40,7 +40,6 @@ export const PostProcessing = () => {
 
   useFrame(() => {
     if (postProcessingRef.current) {
-      renderer.clear();
       postProcessingRef.current.render();
     }
   }, 1);
