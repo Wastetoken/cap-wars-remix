@@ -14,6 +14,7 @@ import {
   uniform,
   positionLocal,
   normalWorld,
+  atan2,
 } from 'three/tsl'
 import { noiseTexture } from '../textures/noiseTexture'
 import { useGLTF } from '@react-three/drei'
@@ -49,7 +50,7 @@ export const Vortex = () => {
     const center = vec2(0.5, 0.5)
     const uvFromCenter = uv().sub(center)
     const dist = uvFromCenter.length()
-    const angle = uvFromCenter.angle()
+    const angle = atan2(uvFromCenter.y, uvFromCenter.x)
     const swirlSpeed = float(4.0).add(dist.mul(6.0))
     const swirlAngle = angle.add(progress.mul(swirlSpeed.mul(6.28)))
     const swirlUv = vec2(
