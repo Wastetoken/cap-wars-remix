@@ -35,6 +35,7 @@ interface CollisionStore {
   updateCollider: (id: string, x: number, z: number) => void
   getColliders: () => Collider[]
   getCollider: (id: string) => Collider | undefined
+  getColliderMap: () => Map<string, Collider>
 }
 
 export const useCollisionStore = create<CollisionStore>((set, get) => ({
@@ -67,6 +68,12 @@ export const useCollisionStore = create<CollisionStore>((set, get) => ({
   getColliders: () => Array.from(get().colliders.values()),
 
   getCollider: (id) => get().colliders.get(id),
+
+  /** Direct access to the live collider Map — iterate `.values()` without
+   *  allocating a throwaway array. The hot per-frame collision checks (enemy
+   *  separation, hitboxes) read this; allocating Array.from on every call
+   *  caused major GC pressure on mobile as enemy counts grew. */
+  getColliderMap: () => get().colliders,
 }))
 
 // ============================================================================
@@ -74,7 +81,7 @@ export const useCollisionStore = create<CollisionStore>((set, get) => ({
 // ============================================================================
 
 // Check what layers a given layer should collide with (for solid collision)
-const shouldCollide = (myLayer: LayerType, otherLayer: LayerType): boolean => {
+export const shouldCollide = (myLayer: LayerType, otherLayer: LayerType): boolean => {
   // Player collides with enemies and obstacles
   if (myLayer === Layer.PLAYER) {
     return otherLayer === Layer.ENEMY || otherLayer === Layer.OBSTACLE
@@ -99,13 +106,16 @@ export const checkCircleCollision = (
   myId: string,
   myLayer: LayerType
 ): { hit: boolean; pushX: number; pushZ: number } => {
-  const colliders = useCollisionStore.getState().getColliders()
+  // Iterate the live collider Map directly — no Array.from allocation.
+  // This runs once per enemy per frame; the old copy caused GC thrash on
+  // mobile as enemy counts grew across levels.
+  const colliders = useCollisionStore.getState().getColliderMap()
 
   let totalPushX = 0
   let totalPushZ = 0
   let hasHit = false
 
-  for (const other of colliders) {
+  for (const other of colliders.values()) {
     if (other.id === myId) continue
     if (!other.solid) continue
     if (!shouldCollide(myLayer, other.layer)) continue
@@ -175,10 +185,10 @@ export const checkHitbox = (
   targetLayer: LayerType,
   excludeId?: string
 ): HitResult[] => {
-  const colliders = useCollisionStore.getState().getColliders()
+  const colliders = useCollisionStore.getState().getColliderMap()
   const hits: HitResult[] = []
 
-  for (const other of colliders) {
+  for (const other of colliders.values()) {
     if (other.id === excludeId) continue
     if (other.layer !== targetLayer) continue
 

@@ -5,6 +5,7 @@ export {
   resolvePosition,
   checkHitbox,
   dealDamageInArea,
+  shouldCollide,
   Layer
 } from './collision-store'
 export type { Collider, LayerType, HitResult, HitPosition } from './collision-store'

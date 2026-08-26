@@ -36,6 +36,13 @@ import { useGameStore } from './store'
 import { detectTouch } from './game/touch'
 import { installDiag, postDiag } from './diag'
 
+/** Mobile devices render at a capped pixel ratio. R3F's default caps DPR at
+ *  2, which on a 360px @3 phone means a 720px-wide WebGL surface — 4× the CSS
+ *  pixels and a major source of GPU heat for a scene that draws many skinned
+ *  enemies. Capping to 1.5 on touch devices cuts the fragment workload by
+ *  ~44% with only a mild softening, and desktop keeps the crisp default. */
+const MOBILE_DPR = detectTouch() ? 1.5 : undefined
+
 /** Exposes the R3F scene + renderer as window.__scene / window.__renderer for
  *  browser verification probes and the dev diagnostics sink (src/diag.ts) */
 const SceneProbe = () => {
@@ -185,6 +192,7 @@ function App() {
             <Canvas
               key={canvasKey}
               shadows
+              dpr={MOBILE_DPR}
               renderer={{
                 antialias: false,
                 depth: false,
