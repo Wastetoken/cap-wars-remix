@@ -9,7 +9,7 @@ export const Bullets = () => {
     <>
       <VFXParticles
         name={PARTICLES.BULLET_SPARKS}
-        maxParticles={1000}
+        maxParticles={2000}
         autoStart={false}
         position={[0, 0, 0]}
         intensity={8}

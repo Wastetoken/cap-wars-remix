@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useMemo } from 'react'
+import { useRef, useEffect, useCallback, useMemo, memo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useQuery, useWorld, useTrait } from 'koota/react'
 import * as THREE from 'three/webgpu'
@@ -80,7 +80,7 @@ interface EnemyMeshProps {
  * Syncs with ECS traits reactively.
  * Registers with collision system for sword hit detection.
  */
-export function EnemyMesh({ entity, models }: EnemyMeshProps) {
+export const EnemyMesh = memo(({ entity, models }: EnemyMeshProps) => {
   const groupRef = useRef<THREE.Group>(null!)
   const staffTipRef = useRef<THREE.Group>(null!)
   const staffObj = useRef<THREE.Object3D | null>(null)
@@ -498,8 +498,8 @@ export function EnemyMesh({ entity, models }: EnemyMeshProps) {
     // During replay playback the replay engine drives transforms and poses
     if (useGameStore.getState().replayPhase === 'playback') return
 
-    // Manual mixer (replaces drei useAnimations) must be stepped every frame
-    mixer.update(delta)
+    // mixer.update moved to EnemyManager batch loop
+    // if (mixer) mixer.update(delta)
 
     const pos = entity.get(Position)
     if (pos) {
@@ -583,14 +583,14 @@ export function EnemyMesh({ entity, models }: EnemyMeshProps) {
   // Store mesh ref in ECS for system access
   useEffect(() => {
     if (groupRef.current && entity.has(MeshRef)) {
-      entity.set(MeshRef, { current: groupRef.current as unknown as THREE.Mesh })
+      entity.set(MeshRef, { current: groupRef.current as unknown as THREE.Mesh, mixer })
     }
     return () => {
       if (entity.has(MeshRef)) {
-        entity.set(MeshRef, { current: null })
+        entity.set(MeshRef, { current: null, mixer: undefined })
       }
     }
-  }, [entity])
+  }, [entity, mixer])
 
   // Kill any running knockback tween on unmount
   useEffect(() => {
@@ -625,7 +625,7 @@ export function EnemyMesh({ entity, models }: EnemyMeshProps) {
       )}
     </group>
   )
-}
+})
 
 // ---------------------------------------------------------------------------
 // Helpers bound lazily to avoid koota hook rules in callbacks
@@ -695,6 +695,14 @@ export function EnemyManager() {
   // Run enemy systems every frame
   useFrame((_, delta) => {
     updateEnemySystems(world, delta)
+
+    // Batch mixer updates in one loop after systems run
+    enemies.forEach((entity) => {
+      const meshRef = entity.get(MeshRef)
+      if (meshRef?.mixer) {
+        meshRef.mixer.update(delta)
+      }
+    })
   })
 
   return (

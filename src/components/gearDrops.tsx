@@ -127,8 +127,11 @@ export const GearDrops = () => {
     const collected: number[] = []
 
     for (const drop of drops) {
-      const dx = pp.x - drop.x
-      const dz = pp.z - drop.z
+      let dropX = drop.x
+      let dropZ = drop.z
+
+      const dx = pp.x - dropX
+      const dz = pp.z - dropZ
       const dist = Math.hypot(dx, dz)
 
       if (dist < COLLECT_RADIUS) {
@@ -139,18 +142,18 @@ export const GearDrops = () => {
       // Magnet glide
       if (dist < MAGNET_RADIUS) {
         const pull = (1 - dist / MAGNET_RADIUS) * 10 * delta
-        drop.x += (dx / dist) * pull
-        drop.z += (dz / dist) * pull
+        dropX += (dx / dist) * pull
+        dropZ += (dz / dist) * pull
       }
 
       const crystal = crystalRefs.current.get(drop.id)
       if (crystal) {
-        crystal.position.set(drop.x, 0.55 + Math.sin(t * 2.2 + drop.id) * 0.09, drop.z)
+        crystal.position.set(dropX, 0.55 + Math.sin(t * 2.2 + drop.id) * 0.09, dropZ)
         crystal.rotation.y = t * 1.4 + drop.id
       }
       const ring = ringRefs.current.get(drop.id)
       if (ring) {
-        ring.mesh.position.set(drop.x, 0.07, drop.z)
+        ring.mesh.position.set(dropX, 0.07, dropZ)
         ring.u.uTime.value += delta
         ring.u.uOpacity.value = 0.45 + Math.sin(t * 3 + drop.id) * 0.18
       }
@@ -267,6 +270,23 @@ const DroppedItem = ({
     group.position.set(x, 0.45, z)
     return group
   }, [scene, x, z])
+
+  useEffect(() => {
+    return () => {
+      obj.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          const mesh = child as THREE.Mesh
+          mesh.geometry?.dispose()
+          if (Array.isArray(mesh.material)) {
+            mesh.material.forEach((m) => m.dispose())
+          } else {
+            mesh.material?.dispose()
+          }
+        }
+      })
+    }
+  }, [obj])
+
   return <primitive object={obj} ref={setRef} />
 }
 

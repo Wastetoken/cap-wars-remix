@@ -122,6 +122,23 @@ const Piece = memo(({
   placement: Placement
 }) => {
   const obj = useMemo(() => prepClone(scene), [scene])
+
+  useEffect(() => {
+    return () => {
+      obj.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          const mesh = child as THREE.Mesh
+          mesh.geometry?.dispose()
+          if (Array.isArray(mesh.material)) {
+            mesh.material.forEach((m) => m.dispose())
+          } else {
+            mesh.material?.dispose()
+          }
+        }
+      })
+    }
+  }, [obj])
+
   return (
       <primitive
         object={obj}

@@ -6,7 +6,9 @@ export {
   checkHitbox,
   dealDamageInArea,
   shouldCollide,
-  Layer
+  Layer,
+  querySpatialGrid,
+  markSpatialGridDirty,
 } from './collision-store'
 export type { Collider, LayerType, HitResult, HitPosition } from './collision-store'
 export { CollisionBody, Obstacle, Enemy } from './CollisionBody'

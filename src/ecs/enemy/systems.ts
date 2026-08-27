@@ -19,7 +19,7 @@ import { bossBrainSystem } from './bossBrain'
 import { damp } from 'three/src/math/MathUtils.js'
 import { eventBus, EVENTS } from '@/constants'
 import { useGameStore, isGameFrozen } from '@/store'
-import { Layer, useCollisionStore, shouldCollide } from '@/collision'
+import { Layer, useCollisionStore, shouldCollide, querySpatialGrid } from '@/collision'
 import { ARENA_BOUND } from '@/constants'
 import { MOBS, type MobType } from '@/game/mobs'
 import { getIcePatches, ICE_PATCH_RADIUS, ICE_SLOW_AMOUNT } from '@/components/iceFloor'
@@ -283,11 +283,6 @@ export function stunDecaySystem(world: World, delta: number) {
 const ENEMY_COLLISION_RADIUS = 0.5
 
 export function enemyCollisionSystem(world: World) {
-  // Fetch the live collider Map ONCE per frame and inline the separation
-  // check. The old code called checkCircleCollision per enemy, which each
-  // allocated a result object AND re-read the store — N allocations/frame
-  // that grew with enemy count (later levels) and thrashed the GC on
-  // mobile (heat + jank). Inlining keeps this hot path allocation-free.
   const colliders = useCollisionStore.getState().getColliderMap()
 
   world.query(IsEnemy, Position).forEach((entity) => {
@@ -298,7 +293,9 @@ export function enemyCollisionSystem(world: World) {
     let totalPushZ = 0
     let hasHit = false
 
-    for (const other of colliders.values()) {
+    const candidates = querySpatialGrid(pos.x, pos.z, ENEMY_COLLISION_RADIUS)
+
+    for (const other of candidates) {
       if (other.id === myId) continue
       if (!other.solid) continue
       if (!shouldCollide(Layer.ENEMY, other.layer)) continue

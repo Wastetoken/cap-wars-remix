@@ -46,6 +46,9 @@ export const PlayerController = () => {
   const velocity = useRef(new Vector3())
   const cameraRef = useRef<THREE.OrthographicCamera>(null)
   const capsRef = useRef<CapsHandle>(null)
+  const scratchVec3 = useRef(new Vector3())
+  const scratchQuat = useRef(new Quaternion())
+  const scratchEuler = useRef(new Euler())
 
   // Hide the live player while a saved-replay ghost is performing (external
   // playback) so the two rigs don't overlap.
@@ -144,7 +147,6 @@ export const PlayerController = () => {
   }, [selectedCharacter])
 
   // Store state
-  const setPlayerPosition = useGameStore((s) => s.setPlayerPosition)
   const isCharging = useGameStore((s) => s.isCharging)
   const isSpinAttacking = useGameStore((s) => s.isSpinAttacking)
   const isParrying = useGameStore((s) => s.isParrying)
@@ -237,16 +239,14 @@ export const PlayerController = () => {
     if (cooldown !== undefined && dashDelay.current > 0) return
     isDodge && mobilitySparksRef.current?.start()
 
-    const dir = direction ?? playerRef.current.getWorldDirection(new THREE.Vector3())
+    const dir = direction ?? playerRef.current.getWorldDirection(scratchVec3.current)
     if (dir.length() === 0) return
 
     isDashing.current = true
     setDashing(true)
     onStart?.()
 
-    const target = playerRef.current.position
-      .clone()
-      .add(dir.clone().normalize().multiplyScalar(distance))
+    const target = scratchVec3.current.copy(playerRef.current.position).add(dir.normalize().multiplyScalar(distance))
 
     const tweenVars: gsap.TweenVars = {
       x: target.x,
@@ -448,8 +448,8 @@ export const PlayerController = () => {
   const updateCamera = (delta: number) => {
     if (!playerRef.current || !cameraRef.current) return
     const { x, y, z } = playerRef.current.position
-    const targetPosition = new Vector3(x, y + 6, z + 5)
-    cameraRef.current.position.lerp(targetPosition, 4 * delta)
+    scratchVec3.current.set(x, y + 6, z + 5)
+    cameraRef.current.position.lerp(scratchVec3.current, 4 * delta)
   }
 
   const updateVelocity = () => {
@@ -508,8 +508,8 @@ export const PlayerController = () => {
     if (useGameStore.getState().touchMode) {
       if (velocity.current.lengthSq() > 0.04) {
         const yaw = Math.atan2(velocity.current.x, velocity.current.z)
-        const target = new Quaternion().setFromEuler(new Euler(0, yaw, 0))
-        playerRef.current.quaternion.slerp(target, delta * 12)
+        scratchQuat.current.setFromEuler(scratchEuler.current.set(0, yaw, 0))
+        playerRef.current.quaternion.slerp(scratchQuat.current, delta * 12)
       }
       return
     }
@@ -528,8 +528,8 @@ export const PlayerController = () => {
     const dx = aimHit.x - playerRef.current.position.x
     const dz = aimHit.z - playerRef.current.position.z
     if (dx * dx + dz * dz < AIM_DEADZONE_SQ) return
-    const targetRotation = new Quaternion().setFromEuler(new Euler(0, Math.atan2(dx, dz), 0))
-    playerRef.current.quaternion.slerp(targetRotation, delta * 10)
+    scratchQuat.current.setFromEuler(scratchEuler.current.set(0, Math.atan2(dx, dz), 0))
+    playerRef.current.quaternion.slerp(scratchQuat.current, delta * 10)
   }
 
   // Input handlers
@@ -546,14 +546,17 @@ export const PlayerController = () => {
       switch (key) {
         case 'KeyA':
           // Dodge left (strafe left)
-          return new Vector3(-distance, 0, 0)
+          scratchVec3.current.set(-distance, 0, 0)
+          return scratchVec3.current
         case 'KeyS':
           // Dodge backward
-          const backward = playerRef.current?.getWorldDirection(new Vector3()) ?? new Vector3(0, 0, -1)
-          return backward.multiplyScalar(-distance)
+          const backward = playerRef.current?.getWorldDirection(scratchVec3.current) ?? scratchVec3.current.set(0, 0, -1)
+          backward.multiplyScalar(-distance)
+          return backward
         case 'KeyD':
           // Dodge right (strafe right)
-          return new Vector3(distance, 0, 0)
+          scratchVec3.current.set(distance, 0, 0)
+          return scratchVec3.current
         default:
           return null
       }
@@ -565,7 +568,7 @@ export const PlayerController = () => {
       const dashDir =
         velocity.current.length() > 0
           ? velocity.current.clone()
-          : (playerRef.current?.getWorldDirection(new Vector3()) ?? new Vector3(0, 0, -1))
+          : (playerRef.current?.getWorldDirection(scratchVec3.current) ?? scratchVec3.current.set(0, 0, -1))
       dashTo(dashDir)
     }
 
@@ -593,16 +596,17 @@ export const PlayerController = () => {
           const char = CHARACTERS[store.selectedCharacter]
           const distance = char.mobility.distance * 0.5
           const duration = Math.max(0.08, char.mobility.duration * 0.5)
+          const o = playerRef.current?.position.clone()
+          const nd = dodgeDir.clone().normalize()
 
           // Trigger dodge VFX
-          const o = playerRef.current.position.clone()
-          const nd = dodgeDir.clone().normalize()
           dash({
             direction: dodgeDir,
             distance,
             duration,
             isDodge: true,
             onStart: () => {
+              if (!o) return
               eventBus.emit(EVENTS.MOBILITY_CAST, {
                 kind: 'dash',
                 ox: o.x,
@@ -782,14 +786,14 @@ export const PlayerController = () => {
     // Trigger spin attack dash
     if (spinAttackTriggered) {
       clearSpinAttack()
-      const dashDir = playerRef.current.getWorldDirection(new THREE.Vector3())
+      const dashDir = playerRef.current.getWorldDirection(scratchVec3.current)
       spinAttackDash(dashDir, 6)
     }
 
     // Trigger dash attack dash (like spin attack)
     if (dashAttackTriggered) {
       clearDashAttack()
-      const dashDir = playerRef.current.getWorldDirection(new THREE.Vector3())
+      const dashDir = playerRef.current.getWorldDirection(scratchVec3.current)
       spinAttackDash(dashDir, 3) // Longer dash for dash attack
     }
 
@@ -838,7 +842,6 @@ export const PlayerController = () => {
       playerRef.current.position.y = Math.abs(gy) < 0.01 ? 0 : gy
     }
 
-    setPlayerPosition(playerRef.current.position)
     dashDelay.current -= delta
   })
 
