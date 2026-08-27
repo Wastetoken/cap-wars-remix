@@ -272,10 +272,6 @@ export const checkHitbox = (
 
   return hits.sort((a, b) => a.distance - b.distance)
 }
-  }
-
-  return hits.sort((a, b) => a.distance - b.distance)
-}
 
 /**
  * Deal damage to all enemies in a hitbox area.
