@@ -37,7 +37,7 @@ export function markSpatialGridDirty() {
   gridDirty = true
 }
 
-function querySpatialGrid(x: number, z: number, radius: number): Collider[] {
+export function querySpatialGrid(x: number, z: number, radius: number): Collider[] {
   const now = performance.now()
   if (gridDirty || now - lastRebuild > 20) {
     rebuildSpatialGrid()
