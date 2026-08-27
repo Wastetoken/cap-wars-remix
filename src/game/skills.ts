@@ -289,7 +289,6 @@ export const DEFAULT_SETTINGS: GameSettings = {
 }
 
 const SETTINGS_KEY = 'caps-wars-settings'
-const SAVE_KEY = 'caps-wars-save'
 
 const isMobileDevice = () =>
   typeof window !== 'undefined' &&
