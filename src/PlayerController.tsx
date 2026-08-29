@@ -147,6 +147,7 @@ export const PlayerController = () => {
   }, [selectedCharacter])
 
   // Store state
+  const setPlayerPosition = useGameStore((s) => s.setPlayerPosition)
   const isCharging = useGameStore((s) => s.isCharging)
   const isSpinAttacking = useGameStore((s) => s.isSpinAttacking)
   const isParrying = useGameStore((s) => s.isParrying)
@@ -842,6 +843,7 @@ export const PlayerController = () => {
       playerRef.current.position.y = Math.abs(gy) < 0.01 ? 0 : gy
     }
 
+    setPlayerPosition(playerRef.current.position)
     dashDelay.current -= delta
   })
 

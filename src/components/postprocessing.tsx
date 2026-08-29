@@ -11,8 +11,13 @@ export const PostProcessing = () => {
   const postProcessingQuality = useGameStore((s) => s.settings.postProcessing)
 
   const postProcessingRef = useRef<THREE.PostProcessing>(null);
+  const isWebGPU = useRef(false);
 
   useEffect(() => {
+    isWebGPU.current = renderer.constructor.name.includes('WebGPU') || (renderer as any).isWebGPURenderer === true;
+
+    if (!isWebGPU.current) return;
+
     const scenePass = pass(scene, camera, {
       minFilter: THREE.LinearFilter,
       magFilter: THREE.LinearFilter,
@@ -42,6 +47,7 @@ export const PostProcessing = () => {
   }, [renderer, scene, camera, postProcessingQuality]);
 
   useFrame(() => {
+    if (!isWebGPU.current) return;
     if (postProcessingRef.current) {
       postProcessingRef.current.render();
     }
