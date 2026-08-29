@@ -2360,16 +2360,6 @@ canvas {
    Login splash — mobile-first auth screen
    ========================================================================== */
 
-@font-face {
-  font-family: 'Space Grotesk';
-  src: local('Space Grotesk'), url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap');
-}
-
-@font-face {
-  font-family: 'Inter';
-  src: local('Inter'), url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap');
-}
-
 .login-splash {
   height: 100lvh;
   position: relative;
