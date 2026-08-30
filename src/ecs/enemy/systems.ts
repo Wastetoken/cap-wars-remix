@@ -283,8 +283,6 @@ export function stunDecaySystem(world: World, delta: number) {
 const ENEMY_COLLISION_RADIUS = 0.5
 
 export function enemyCollisionSystem(world: World) {
-  const colliders = useCollisionStore.getState().getColliderMap()
-
   world.query(IsEnemy, Position).forEach((entity) => {
     const pos = entity.get(Position)!
     const myId = `enemy-${entity.id()}`
