@@ -31,7 +31,7 @@ import { eventBus, EVENTS } from '@/constants'
 import { useLevelManager } from '@/game/useLevelManager'
 import { VFXEmitter } from 'r3f-vfx'
 import { MOBS, isBossMob, type MobType } from '@/game/mobs'
-import { registerRig, unregisterRig, enemyRigId } from '@/replay/rigRegistry'
+import { registerRig, unregisterRig, enemyRigId, getRigs } from '@/replay/rigRegistry'
 
 // ============================================================================
 // Enemy renderer — KayKit Adventurers mobs (Mage / Rogue / Barbarian / Knight)
@@ -694,15 +694,14 @@ export function EnemyManager() {
 
   // Run enemy systems every frame
   useFrame((_, delta) => {
+    if (useGameStore.getState().replayPhase === 'playback') return
     updateEnemySystems(world, delta)
 
     // Batch mixer updates in one loop after systems run
-    enemies.forEach((entity) => {
-      const meshRef = entity.get(MeshRef)
-      if (meshRef?.mixer) {
-        meshRef.mixer.update(delta)
-      }
-    })
+    const rigs = getRigs()
+    for (const [, rig] of rigs) {
+      rig.mixer.update(delta)
+    }
   })
 
   return (
