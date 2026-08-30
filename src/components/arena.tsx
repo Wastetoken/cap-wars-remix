@@ -1,4 +1,4 @@
-import { useMemo, memo } from 'react'
+import { useMemo, memo, useEffect } from 'react'
 import { useGLTF } from '@react-three/drei'
 import { SkeletonUtils } from 'three-stdlib'
 import * as THREE from 'three'
