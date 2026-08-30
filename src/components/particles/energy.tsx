@@ -1,5 +1,5 @@
 import { VFXParticles } from 'r3f-vfx'
-import { SphereGeometry } from 'three/webgpu'
+import { SphereGeometry } from 'three'
 import { PARTICLES } from './index'
 
 export const Energy = () => {

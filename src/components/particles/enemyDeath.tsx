@@ -1,6 +1,6 @@
 import { uv, vec2, vec4, step, float, color } from 'three/tsl'
 import { VFXParticles } from 'r3f-vfx'
-import { PlaneGeometry } from 'three/webgpu'
+import { PlaneGeometry } from 'three'
 import { useEffect, useMemo } from 'react'
 import { EVENTS, eventBus } from '@/constants'
 import { useVFXEmitter, PARTICLES } from './index'

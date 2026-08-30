@@ -1,5 +1,6 @@
-import * as THREE from 'three/webgpu'
-import { MeshBasicNodeMaterial, TextureLoader, RepeatWrapping } from 'three/webgpu'
+import * as THREE from 'three'
+import { MeshBasicNodeMaterial } from 'three/webgpu'
+import { TextureLoader, RepeatWrapping } from 'three'
 import {
   abs,
   cameraPosition,

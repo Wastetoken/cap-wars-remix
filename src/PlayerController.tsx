@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { Quaternion, Vector3, Vector2, Plane, Raycaster, Group, Euler } from 'three/webgpu'
+import { Quaternion, Vector3, Vector2, Plane, Raycaster, Group, Euler } from 'three'
 import { OrthographicCamera, useKeyboardControls } from '@react-three/drei'
 import { useRef, useEffect, Suspense } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
