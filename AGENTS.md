@@ -1,11 +1,11 @@
 # Base44 Dev Environment
 
 ## What this is
-Caps Wars — a dungeon action game built with Vite + React 19 + React Three Fiber v10 (alpha) + three.js WebGPU/WebGL2. Frontend-only; no backend or database.
+Caps Wars — a dungeon action game built with Vite + React 19 + React Three Fiber v9 (stable) + three.js WebGL2. Frontend-only; no backend or database.
 
 ## Running it
 - `docker compose -f docker-compose.base44.yml up -d` brings up the Vite dev server on host port 3000 (container port 5173).
-- Dependencies install at container startup via `npm install --legacy-peer-deps` (the `.npmrc` sets `legacy-peer-deps=true`; the R3F v10 alpha packages have peer-dep conflicts that require this).
+- Dependencies install at container startup via `npm install --legacy-peer-deps` (the `.npmrc` sets `legacy-peer-deps=true`).
 - Live reload is on: Vite runs with `--host 0.0.0.0`, polling watch (chokidar `usePolling`) is enabled because bind mounts often miss native FS events.
 
 ## Vite config notes
