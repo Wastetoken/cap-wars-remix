@@ -859,7 +859,7 @@ export const PlayerController = () => {
         far={60}
       />
 
-      <group ref={playerRef}>
+      <group ref={playerRef} name="player">
         {/* Caps loads the hero GLB; keep that Suspense local so the
             controller (camera + movement) never suspends with it. */}
         <Suspense fallback={null}>

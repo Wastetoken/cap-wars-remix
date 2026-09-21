@@ -31,6 +31,7 @@ import { ReplayCamera } from './replay/ReplayCamera'
 import { ReplayGhosts } from './replay/ReplayGhosts'
 import { ReplayHUD } from './replay/ReplayHUD'
 import { BootLoader } from './components/hud/BootLoader'
+import { GameMonitor, GameMonitorProbe } from './components/hud/GameMonitor'
 import { useGameStore } from './store'
 import { detectTouch } from './game/touch'
 import { installDiag, postDiag } from './diag'
@@ -232,6 +233,7 @@ function App() {
                   <Preload all />
                 </Suspense>
                 <SceneProbe />
+                <GameMonitorProbe />
                 <ReplaySystem />
                 <ReplayCamera />
               </SceneErrorBoundary>
@@ -244,6 +246,7 @@ function App() {
       <AudioSystem />
       <ReplayHUD />
       <BootLoader />
+      <GameMonitor />
     </>
   )
 }
