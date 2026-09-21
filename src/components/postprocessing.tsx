@@ -1,56 +1,95 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
-import * as THREE from "three/webgpu";
-import { pass, oneMinus, vec2, screenUV, length, smoothstep } from "three/tsl";
-import { bloom } from "three/addons/tsl/display/BloomNode.js";
-import { smaa } from "three/examples/jsm/tsl/display/SMAANode.js";
+import * as THREE from "three";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
+import { SMAAPass } from "three/examples/jsm/postprocessing/SMAAPass.js";
+import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { useGameStore } from "@/store";
 
+/** Mild radial darkening at screen edges — ported from the TSL vignette. */
+const VignetteShader = {
+  uniforms: {
+    tDiffuse: { value: null as THREE.Texture | null },
+  },
+  vertexShader: /* glsl */ `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: /* glsl */ `
+    uniform sampler2D tDiffuse;
+    varying vec2 vUv;
+    void main() {
+      vec4 color = texture2D(tDiffuse, vUv);
+      float dist = length(vUv - vec2(0.5));
+      float vignette = smoothstep(0.0, 0.5, 1.0 - dist * dist);
+      gl_FragColor = vec4(color.rgb * vignette, color.a);
+    }
+  `,
+};
+
 export const PostProcessing = () => {
-  const { renderer, scene, camera } = useThree();
-  const postProcessingQuality = useGameStore((s) => s.settings.postProcessing)
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
+  const camera = useThree((s) => s.camera);
+  const size = useThree((s) => s.size);
+  const postProcessingEnabled = useGameStore((s) => s.settings.postProcessing);
 
-  const postProcessingRef = useRef<THREE.PostProcessing>(null);
-  const isWebGPU = useRef(false);
+  const composerRef = useRef<EffectComposer | null>(null);
 
+  // (Re)build the composer when the renderer, scene, camera, or
+  // post-processing toggle changes.
   useEffect(() => {
-    isWebGPU.current = renderer.constructor.name.includes('WebGPU') || (renderer as any).isWebGPURenderer === true;
+    const composer = new EffectComposer(gl);
+    composer.setPixelRatio(gl.getPixelRatio());
+    composer.addPass(new RenderPass(scene, camera));
 
-    if (!isWebGPU.current) return;
+    if (postProcessingEnabled) {
+      // Bloom params from the TSL version: threshold 0.15, smoothing 0.6, intensity 0.85
+      const bloomPass = new UnrealBloomPass(
+        new THREE.Vector2(size.width, size.height),
+        0.85, // strength
+        0.6, // radius
+        0.15 // threshold
+      );
+      composer.addPass(bloomPass);
 
-    const scenePass = pass(scene, camera, {
-      minFilter: THREE.LinearFilter,
-      magFilter: THREE.LinearFilter,
-    });
+      composer.addPass(new ShaderPass(VignetteShader));
 
-    const scenePassColor = scenePass.getTextureNode("output");
-
-    const postProcessing = new THREE.PostProcessing(renderer);
-
-    if (postProcessingQuality !== 'off') {
-      const center = vec2(0.5)
-      const vignette = smoothstep(0., 0.5, oneMinus(length(screenUV.sub(center))).pow(2.))
-      const bloomResult = bloom(scenePassColor, 0.15, 0.6, 0.85)
-      const withBloom = scenePassColor.mul(vignette).add(bloomResult)
-      postProcessing.outputNode = postProcessingQuality === 'high'
-        ? smaa(withBloom)
-        : withBloom
-    } else {
-      postProcessing.outputNode = scenePassColor;
+      composer.addPass(new SMAAPass(size.width, size.height));
     }
 
-    postProcessingRef.current = postProcessing;
+    composer.addPass(new OutputPass());
+    composer.setSize(size.width, size.height);
+    composerRef.current = composer;
 
     return () => {
-      postProcessingRef.current = null;
+      composer.dispose();
+      composerRef.current = null;
     };
-  }, [renderer, scene, camera, postProcessingQuality]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gl, scene, camera, postProcessingEnabled]);
 
-  useFrame(() => {
-    if (!isWebGPU.current) return;
-    if (postProcessingRef.current) {
-      postProcessingRef.current.render();
+  // Resize the composer (and all passes) when the viewport changes.
+  useEffect(() => {
+    if (composerRef.current) {
+      composerRef.current.setPixelRatio(gl.getPixelRatio());
+      composerRef.current.setSize(size.width, size.height);
+    }
+  }, [size.width, size.height, gl]);
+
+  // Priority 1 takes over the render loop — fiber skips its default
+  // gl.render() call and we render through the EffectComposer instead.
+  useFrame((_, delta) => {
+    if (composerRef.current) {
+      composerRef.current.render(delta);
     }
   }, 1);
+
   return null;
 };

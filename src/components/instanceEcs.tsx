@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
-import * as THREE from "three/webgpu";
+import * as THREE from "three";
 
 // ---------------------------------------------------------------------------
 // Shared temporaries (module-level, avoids GC pressure)

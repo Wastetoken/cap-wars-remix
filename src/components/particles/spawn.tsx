@@ -1,5 +1,5 @@
 import { VFXParticles } from 'r3f-vfx'
-import { OctahedronGeometry } from 'three/webgpu'
+import { OctahedronGeometry } from 'three'
 import { PARTICLES } from './index'
 
 export const Spawn = () => {

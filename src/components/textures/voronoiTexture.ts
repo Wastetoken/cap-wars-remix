@@ -1,4 +1,4 @@
-import { TextureLoader, RepeatWrapping, NearestFilter } from 'three/webgpu'
+import { TextureLoader, RepeatWrapping, NearestFilter } from 'three'
 
 export const voronoiTexture = new TextureLoader().load('./voronoi.png')
 voronoiTexture.wrapS = voronoiTexture.wrapT = RepeatWrapping

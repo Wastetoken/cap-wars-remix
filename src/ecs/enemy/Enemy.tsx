@@ -1,7 +1,7 @@
 import { useRef, useEffect, useCallback, useMemo, memo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useQuery, useWorld, useTrait } from 'koota/react'
-import * as THREE from 'three/webgpu'
+import * as THREE from 'three'
 import gsap from 'gsap'
 import type { Entity } from 'koota'
 import { useGLTF } from '@react-three/drei'

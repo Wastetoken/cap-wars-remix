@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
-import { MeshBasicNodeMaterial, Quaternion, Vector3 } from 'three/webgpu'
+import { MeshBasicNodeMaterial } from 'three/webgpu'
+import { Quaternion, Vector3 } from 'three'
 import { Instances as InstancedMesh, type InstancesRef } from './instanceEcs'
 import { useGLTF } from '@react-three/drei'
 import { color, dot, normalView, positionViewDirection, pow, vec4 } from 'three/tsl'

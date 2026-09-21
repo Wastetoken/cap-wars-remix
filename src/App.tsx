@@ -3,7 +3,6 @@ import { Lights } from './components/lights'
 import { KeyboardControls, Preload } from '@react-three/drei'
 import { PostProcessing } from './components/postprocessing'
 import { Arena } from './components/arena'
-import { HalfFloatType } from 'three'
 import * as THREE from 'three'
 import { PlayerController } from './PlayerController'
 import { Particles } from './components/particles'
@@ -193,13 +192,11 @@ function App() {
               key={canvasKey}
               shadows
               dpr={MOBILE_DPR}
-              renderer={{
+              gl={{
                 antialias: false,
                 depth: false,
                 stencil: false,
                 alpha: false,
-                forceWebGL: false,
-                outputType: HalfFloatType,
               }}
             >
               <SceneErrorBoundary>

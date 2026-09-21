@@ -1,5 +1,6 @@
 import { VFXParticles } from 'r3f-vfx'
-import { SphereGeometry, TextureLoader } from 'three/webgpu'
+import { SphereGeometry } from 'three'
+import { TextureLoader } from 'three'
 import { useMemo } from 'react'
 import { texture, uv, vec4 } from 'three/tsl'
 import { PARTICLES } from './index'
